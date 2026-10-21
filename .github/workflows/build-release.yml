@@ -2,9 +2,16 @@ name: Build and Release
 
 on:
   push:
+    branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag to publish (for example v1.0.0). Leave blank for build-only.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -13,9 +20,13 @@ jobs:
   build:
     name: Build Windows app
     runs-on: windows-latest
+    outputs:
+      release_tag: ${{ steps.changelog.outputs.tag }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.release_tag || github.ref }}
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
@@ -42,10 +53,13 @@ jobs:
           Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath 'dist\AlienwareKeyboardStudio-win-x64.zip' -Force
 
       - name: Extract changelog section for this tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        id: changelog
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '')
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.release_tag || github.ref_name }}
         run: |
-          $tag = '${{ github.ref_name }}'
+          $tag = $env:RELEASE_TAG
           $headingPattern = '^## \[' + [regex]::Escape($tag) + '\](?:\s|$)'
           $lines = Get-Content -Path 'CHANGELOG.md'
           $start = -1
@@ -68,6 +82,7 @@ jobs:
             throw "The CHANGELOG.md section for '$tag' is empty."
           }
           Set-Content -Path 'dist\release-notes.md' -Value $releaseNotes -Encoding utf8
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "tag=$tag"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -79,7 +94,7 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -94,7 +109,8 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          name: Alienware Keyboard Studio ${{ github.ref_name }}
+          tag_name: ${{ needs.build.outputs.release_tag }}
+          name: Alienware Keyboard Studio ${{ needs.build.outputs.release_tag }}
           body_path: release-assets/release-notes.md
           files: release-assets/AlienwareKeyboardStudio-win-x64.zip
           fail_on_unmatched_files: true

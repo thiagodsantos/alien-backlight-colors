@@ -2,6 +2,11 @@
 
 Release notes are written under the exact version tag heading. The release workflow publishes the matching section only.
 
+## [v1.2.0]
+
+### Changed
+- Renamed the application to Alien Backlight Colors.
+
 ## [v1.1.0]
 
 ### Added

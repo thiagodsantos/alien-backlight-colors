@@ -2,6 +2,8 @@
 
 Release notes are written under the exact version tag heading. The release workflow publishes the matching section only.
 
+## [v1.1.0]
+
 ## [v1.0.0]
 
 ### Added

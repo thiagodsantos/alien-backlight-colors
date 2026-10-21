@@ -1,6 +1,6 @@
-# Alienware Keyboard Studio
+# Alien Backlight Colors
 
-A Windows desktop editor for the four lighting zones on Dell G15 laptops using the Alienware AW-ELC controller.
+A Windows desktop editor for the four lighting zones on Dell G15 laptops using the Alien AW-ELC controller.
 
 ## Supported hardware
 
@@ -38,7 +38,7 @@ If the controller is available to Windows HID, the device badge shows **DEVICE C
 - **Turn backlight off/on** applies immediately. Turning the light back on restores the selected slider brightness; `0%` sends the light-off state. Use this toggle to turn the backlight off explicitly.
 - When a supported keyboard is detected, the app restores the last successfully applied lighting on startup. Set **Backlight active for (seconds)** to turn it off after keyboard inactivity; `0` keeps it active while the app is open or running in the notification area; in this mode, the app reapplies the saved lighting and reopens the controller every 30 seconds as a keep-alive. Pressing a key restores the last applied colors and restarts the timeout. Closing the window hides the app in the notification area, where it must remain running to handle keyboard activity. Use the tray menu's **Exit** command to stop it; after exiting, the app cannot respond to keyboard input until launched again. The last applied lighting and timeout setting are saved in the current user's registry.
 - Saved presets retain brightness and on/off state when loaded into the editor; applying a preset always turns the backlight on.
-- Direct HID access is blocked while Alienware Command Center components are registered, because AWCC can own the same controller. Use **Remove AWCC** to launch Dell's registered uninstaller; the app requests confirmation and UAC.
+- Direct HID access is blocked while Alien Command Center (AWCC) components are registered because they can own the same controller. Use **Remove AWCC** to launch Dell's registered uninstaller; the app requests confirmation and UAC.
 - **Restore default** applies static red at 100% brightness to all four zones; it does not perform a firmware factory reset.
 - **Remove AWCC** asks for confirmation and launches the registered Dell AWCC Package Manager uninstaller with UAC. It does not force-delete drivers, services, registry keys, or residual files; removing AWCC can also remove Dell lighting/thermal features.
 

@@ -1,15 +1,15 @@
-# Alienware Command Center Desktop — Implementation Plan
+# Alien Command Center Desktop — Implementation Plan
 
 ## Description
 
-Build a Windows desktop application for configuring Alienware keyboard backlighting, with the core lighting and profile-management workflow associated with Alienware Command Center. Users can choose colors and lighting effects independently for the keyboard's three alphanumeric zones and numeric keypad, preview changes, and save or apply presets.
+Build a Windows desktop application for configuring Alien keyboard backlighting, with the core lighting and profile-management workflow associated with Alien Command Center. Users can choose colors and lighting effects independently for the keyboard's three alphanumeric zones and numeric keypad, preview changes, and save or apply presets.
 
 The initial hardware target is the Dell G15 5515 keyboard using its AW-ELC USB HID controller (VID 187C, PID 0550) and AlienFX APIv4 light IDs 8–11. Keep the hardware protocol behind an adapter and report unsupported models or effects rather than sending unverified commands.
 
 ## Functionalities
 
 ### Keyboard lighting
-- Detect supported Alienware keyboards and show the current device and connection status.
+- Detect supported Alien keyboards and show the current device and connection status.
 - Display a keyboard lighting editor with four independently configurable zones: **Left (alpha)**, **Center (alpha)**, **Right (alpha)**, and **Numeric keypad**.
 - Set a color for each zone using a color picker and a hex/RGB value input.
 - Select a lighting style per zone, starting with **Static** and adding supported effects such as **Breathing**, **Color Cycle**, and **Wave** when the device API exposes them.

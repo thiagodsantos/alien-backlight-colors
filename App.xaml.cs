@@ -32,7 +32,7 @@ public partial class App : Application
         if (existingProcessId != 0)
         {
             MessageBox.Show(
-                $"Alienware Keyboard Studio is already running in the notification area (PID {existingProcessId}). Restore it from there instead of starting a second controller instance.",
+                $"Alien Backlight Colors is already running in the notification area (PID {existingProcessId}). Restore it from there instead of starting a second controller instance.",
                 "Keyboard controller already in use",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
@@ -47,7 +47,7 @@ public partial class App : Application
         if (!_ownsInstanceMutex)
         {
             MessageBox.Show(
-                "Alienware Keyboard Studio is already running in the notification area. Restore it from there instead of starting a second controller instance.",
+                "Alien Backlight Colors is already running in the notification area. Restore it from there instead of starting a second controller instance.",
                 "Keyboard controller already in use",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);

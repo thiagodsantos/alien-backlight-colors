@@ -39,7 +39,7 @@ internal sealed class WindowsHidTransport : IDisposable
         {
             var error = Marshal.GetLastWin32Error();
             _handle.Dispose();
-            throw new Win32Exception(error, "Could not open the Alienware keyboard HID interface.");
+            throw new Win32Exception(error, "Could not open the Alien keyboard HID interface.");
         }
 
         try

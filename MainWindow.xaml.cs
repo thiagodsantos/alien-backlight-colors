@@ -16,7 +16,7 @@ public partial class MainWindow : Window
     private const int WmInput = 0x00FF;
     private const uint RidevInputSink = 0x00000100;
 
-    private readonly AlienwareAwElcKeyboardLightingService _lightingService = new();
+    private readonly AlienAwElcKeyboardLightingService _lightingService = new();
     private readonly Forms.NotifyIcon _trayIcon;
     private HwndSource? _windowSource;
     private bool _allowClose;
@@ -30,13 +30,13 @@ public partial class MainWindow : Window
         DataContext = new MainViewModel(new PresetStore(), new ActiveLightingStore(), _lightingService);
 
         var trayMenu = new Forms.ContextMenuStrip();
-        trayMenu.Items.Add("Open Keyboard Studio", null, (_, _) => RestoreWindow());
+        trayMenu.Items.Add("Open Alien Backlight Colors", null, (_, _) => RestoreWindow());
         trayMenu.Items.Add(new Forms.ToolStripSeparator());
         trayMenu.Items.Add("Exit", null, (_, _) => ExitFromTray());
         _trayIcon = new Forms.NotifyIcon
         {
             Icon = System.Drawing.SystemIcons.Application,
-            Text = "Alienware Keyboard Studio is running",
+            Text = "Alien Backlight Colors is running",
             ContextMenuStrip = trayMenu,
             Visible = true
         };
@@ -132,7 +132,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 this,
-                "No validated Alienware Command Center Package Manager uninstaller was found. No files were changed. Remove AWCC through Windows Settings > Apps instead.",
+                "No validated Alien Command Center Package Manager uninstaller was found. No files were changed. Remove AWCC through Windows Settings > Apps instead.",
                 "AWCC uninstaller unavailable",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
@@ -141,8 +141,8 @@ public partial class MainWindow : Window
 
         var confirmation = MessageBox.Show(
             this,
-            "This launches Dell's registered AWCC uninstaller with administrator permission. It can remove Alienware lighting, thermal, and profile features. This app will not force-delete drivers, services, registry keys, or folders. Continue?",
-            "Remove Alienware Command Center",
+            "This launches Dell's registered AWCC uninstaller with administrator permission. It can remove Alien lighting, thermal, and profile features. This app will not force-delete drivers, services, registry keys, or folders. Continue?",
+            "Remove Alien Command Center",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         if (confirmation != MessageBoxResult.Yes)

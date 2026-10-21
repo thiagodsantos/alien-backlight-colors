@@ -1,0 +1,85 @@
+<Window x:Class="AlienCommandCenter.ColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Choose a color"
+        Width="390"
+        Height="510"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBackground}"
+        Foreground="{StaticResource TextBrush}">
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="COLOR PICKER" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
+            <TextBlock Text="Choose an RGB color" FontSize="21" FontWeight="SemiBold" Margin="0,5,0,0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="105" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="HEX VALUE" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5" />
+                <TextBox x:Name="HexInput" Text="#69E0C1" MaxLength="7" FontFamily="Consolas" FontSize="14" TextChanged="HexInput_TextChanged" />
+            </StackPanel>
+            <Border x:Name="ColorPreview" Grid.Column="1" Background="#69E0C1" CornerRadius="8" BorderBrush="#445160" BorderThickness="1" Margin="12,19,0,0" />
+        </Grid>
+        <TextBlock x:Name="HexError" Grid.Row="2" Text="Enter a 6-digit hex value, such as #69E0C1." Foreground="{StaticResource DangerBrush}" FontSize="10" Margin="0,5,0,0" Visibility="Collapsed" />
+
+        <StackPanel Grid.Row="3" Margin="0,18,0,0">
+            <TextBlock Text="RGB COMPONENTS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,10" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="36" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="36" />
+                    <RowDefinition Height="36" />
+                    <RowDefinition Height="36" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="R" Foreground="#FF8585" VerticalAlignment="Center" FontWeight="Bold" />
+                <Slider x:Name="RedSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="RgbSlider_ValueChanged" VerticalAlignment="Center" />
+                <TextBlock x:Name="RedValue" Grid.Column="2" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas" />
+                <TextBlock Grid.Row="1" Text="G" Foreground="#8CE6A3" VerticalAlignment="Center" FontWeight="Bold" />
+                <Slider x:Name="GreenSlider" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="RgbSlider_ValueChanged" VerticalAlignment="Center" />
+                <TextBlock x:Name="GreenValue" Grid.Row="1" Grid.Column="2" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas" />
+                <TextBlock Grid.Row="2" Text="B" Foreground="#8FBFFF" VerticalAlignment="Center" FontWeight="Bold" />
+                <Slider x:Name="BlueSlider" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="RgbSlider_ValueChanged" VerticalAlignment="Center" />
+                <TextBlock x:Name="BlueValue" Grid.Row="2" Grid.Column="2" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas" />
+            </Grid>
+
+            <TextBlock Text="QUICK COLORS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,17,0,7" />
+            <UniformGrid Columns="8" HorizontalAlignment="Left">
+                <Button Tag="#FF4B4B" Background="#FF4B4B" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Red" />
+                <Button Tag="#FF963B" Background="#FF963B" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Orange" />
+                <Button Tag="#FFD84D" Background="#FFD84D" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Yellow" />
+                <Button Tag="#7BD957" Background="#7BD957" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Green" />
+                <Button Tag="#36D6B0" Background="#36D6B0" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Mint" />
+                <Button Tag="#43B8FF" Background="#43B8FF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Blue" />
+                <Button Tag="#786BFF" Background="#786BFF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Violet" />
+                <Button Tag="#F2F5F7" Background="#F2F5F7" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="White" />
+            </UniformGrid>
+        </StackPanel>
+
+        <Grid Grid.Row="4" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Content="Cancel" IsCancel="True" />
+            <Button Grid.Column="2" Content="Use this color" IsDefault="True" Click="UseColor_Click" Background="#1D6657" BorderBrush="#398875" />
+        </Grid>
+    </Grid>
+</Window>

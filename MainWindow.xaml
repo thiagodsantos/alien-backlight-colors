@@ -1,0 +1,290 @@
+<Window x:Class="AlienCommandCenter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alienware Command Center — Keyboard Studio"
+        Width="1420"
+        Height="960"
+        MinWidth="1120"
+        MinHeight="760"
+        Background="{StaticResource AppBackground}"
+        Foreground="{StaticResource TextBrush}"
+        WindowStartupLocation="CenterScreen">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="34">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="48" Height="48" CornerRadius="14" Background="#18302F" BorderBrush="#2D5C54" BorderThickness="1">
+                        <TextBlock Text="A" Foreground="{StaticResource AccentBrush}" FontSize="25" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Margin="15,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="ALIENWARE COMMAND CENTER  /  LIGHTING" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
+                        <TextBlock Text="Keyboard Studio" FontSize="28" FontWeight="SemiBold" Margin="0,3,0,0" />
+                    </StackPanel>
+                </StackPanel>
+                <Border Grid.Column="1" Background="#14211F" BorderBrush="#28453F" BorderThickness="1" CornerRadius="18" Padding="13,8" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding DeviceStatusLabel}" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="1" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18,15" Margin="0,0,0,22">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="38" Height="38" CornerRadius="11" Background="#202A36" VerticalAlignment="Center">
+                        <TextBlock Text="⌨" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="13,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DeviceHeadline}" FontWeight="SemiBold" FontSize="13" />
+                        <TextBlock Text="{Binding DeviceDescription}" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="2" Content="Remove AWCC" Click="RemoveAwcc_Click" Margin="16,0,0,0" ToolTip="Launch the registered Dell AWCC uninstaller with UAC confirmation." />
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2.05*" />
+                    <ColumnDefinition Width="0.95*" MinWidth="330" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20" Margin="0,0,0,18">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,17">
+                                <StackPanel>
+                                    <TextBlock Text="LIGHTING PREVIEW" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
+                                    <TextBlock Text="Your keyboard at a glance" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                                <TextBlock Text="LOCAL PREVIEW" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                            </Grid>
+                            <Border Background="#0A0E13" BorderBrush="#293541" BorderThickness="1" CornerRadius="12" Padding="10">
+                                <ItemsControl ItemsSource="{Binding Zones}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="4" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding ColorBrush}" CornerRadius="8" Margin="5" Height="72" Opacity="0.92">
+                                                <Grid>
+                                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding ZoneName}" Foreground="#09100F" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding SelectedEffect}" Foreground="#12201D" FontSize="9" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                            <TextBlock Text="Apply writes each zone's static color to its own AlienFX light ID. Animated effects are preview-only on this controller." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,12,2,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,15">
+                                <StackPanel>
+                                    <TextBlock Text="ZONE CONTROLS" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
+                                    <TextBlock Text="Tune each section independently" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                                <TextBlock Text="4 ZONES" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                            </Grid>
+                            <Border Background="#0C1118" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="55" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="BACKLIGHT BRIGHTNESS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                        <Slider Minimum="0" Maximum="100" TickFrequency="10" Value="{Binding Brightness, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource AccentBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding BrightnessLabel}" Foreground="{StaticResource TextBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                    <Button Grid.Column="3" Content="{Binding BacklightToggleLabel}" Command="{Binding ToggleBacklightCommand}" Padding="12,8" ToolTip="Turn the keyboard backlight on or off immediately." />
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="Apply sends the selected brightness with the zone colors; the power toggle applies immediately." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
+                            <ItemsControl ItemsSource="{Binding Zones}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource PanelRaised}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="11" Padding="13" Margin="0,0,9,10">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,11">
+                                                    <TextBlock Text="{Binding ZoneName}" FontSize="13" FontWeight="SemiBold" />
+                                                    <TextBlock Text="ZONE" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" FontSize="8" FontWeight="Bold" VerticalAlignment="Center" />
+                                                </Grid>
+                                                <Border Height="42" Background="{Binding ColorBrush}" CornerRadius="7" Margin="0,0,0,11" />
+
+                                                <TextBlock Text="PRIMARY COLOR" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                                <Grid Margin="0,5,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="29" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" MaxLength="7" FontFamily="Consolas" FontSize="12" />
+                                                    <Button Grid.Column="1" Content="Pick" Padding="7,5" Margin="5,0,0,0" Click="PickPrimaryColor_Click" FontSize="10" />
+                                                    <Border Grid.Column="2" Background="{Binding ColorBrush}" BorderBrush="#45515E" BorderThickness="1" CornerRadius="5" Margin="6,0,0,0" />
+                                                </Grid>
+                                                <TextBlock Text="{Binding ColorError}" Foreground="{StaticResource DangerBrush}" FontSize="9" Margin="0,4,0,0" />
+
+                                                <TextBlock Text="STYLE" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,13,0,5" />
+                                                <ComboBox ItemsSource="{Binding EffectOptions}" SelectedItem="{Binding SelectedEffect, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                <Grid Margin="0,13,0,5">
+                                                    <TextBlock Text="EFFECT SPEED" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding SpeedLabel}" HorizontalAlignment="Right" Foreground="{StaticResource TextBrush}" FontSize="10" />
+                                                </Grid>
+                                                <Slider Minimum="1" Maximum="100" Value="{Binding Speed, UpdateSourceTrigger=PropertyChanged}" TickFrequency="1" IsSnapToTickEnabled="False" Foreground="{StaticResource AccentBrush}" />
+
+                                                <TextBlock Text="SECONDARY COLOR" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,13,0,0" ToolTip="Dynamic effects use this zone's secondary color." />
+                                                <Grid Margin="0,5,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="29" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding SecondaryColorHex, UpdateSourceTrigger=PropertyChanged}" MaxLength="7" FontFamily="Consolas" FontSize="12" />
+                                                    <Button Grid.Column="1" Content="Pick" Padding="7,5" Margin="5,0,0,0" Click="PickSecondaryColor_Click" FontSize="10" />
+                                                    <Border Grid.Column="2" Background="{Binding SecondaryColorBrush}" BorderBrush="#45515E" BorderThickness="1" CornerRadius="5" Margin="6,0,0,0" />
+                                                </Grid>
+                                                <TextBlock Text="{Binding SecondaryColorError}" Foreground="{StaticResource DangerBrush}" FontSize="9" Margin="0,4,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                                <Button Content="Restore default (red)" Command="{Binding ResetDeviceCommand}" Margin="0,0,9,0" ToolTip="Applies static red to each of the four light IDs." />
+                                <Button Content="Apply to keyboard" Command="{Binding ApplyCurrentCommand}" Background="#1D6657" BorderBrush="#398875" ToolTip="Writes each zone's static color to its own APIv4 light ID." />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Border Grid.Column="1" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="PRESET LIBRARY" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
+                        <TextBlock Text="Save your favorite looks" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,4" />
+                        <TextBlock Text="Presets are stored locally on this PC." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+                        <TextBlock Text="PRESET NAME" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,6" />
+                        <TextBox Text="{Binding PresetName, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Content="Save current look" Command="{Binding SavePresetCommand}" Margin="0,9,0,17" Background="#1D6657" BorderBrush="#398875" />
+
+                        <Grid Margin="0,0,0,7">
+                            <TextBlock Text="SAVED PRESETS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                            <TextBlock Text="BUILT-IN + CUSTOM" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" FontSize="8" FontWeight="Bold" />
+                        </Grid>
+                        <ListBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" Height="285">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding UpdatedAt, StringFormat={}{0:MMM d}}" Foreground="{StaticResource MutedBrush}" FontSize="9" Margin="0,3,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBuiltIn}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="Ready to preview" Foreground="{StaticResource MutedBrush}" FontSize="9" Margin="0,3,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBuiltIn}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="BUILT-IN" Foreground="{StaticResource MutedBrush}" FontSize="8" FontWeight="Bold" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsBuiltIn}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="Load to editor" Command="{Binding LoadPresetCommand}" />
+                            <Button Grid.Column="2" Content="Apply preset" Command="{Binding ApplyPresetCommand}" Background="#1D6657" BorderBrush="#398875" />
+                        </Grid>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="Rename selected" Command="{Binding RenamePresetCommand}" />
+                            <Button Grid.Column="2" Content="Delete" Command="{Binding DeletePresetCommand}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="3" Background="#111820" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="13,10" Margin="0,18,0,0">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="ALIENWARE KEYBOARD STUDIO" Foreground="{StaticResource MutedBrush}" FontSize="8" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="2,0,10,0" />
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{Binding StatusBrush}" FontSize="10" TextWrapping="Wrap" VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Window>

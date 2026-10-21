@@ -4,6 +4,14 @@ Release notes are written under the exact version tag heading. The release workf
 
 ## [v1.1.0]
 
+### Added
+- Notification-area tray support keeps the app running when its window is closed and provides an explicit Exit command.
+- Persistent lighting restores the last successfully applied colors and backlight timeout from the current user's registry when the app starts.
+- Configurable keyboard-inactivity timeout and controller keep-alive behavior for supported keyboards.
+
+### Changed
+- Applying lighting or a preset now turns the backlight on; presets retain their brightness and on/off state when loaded into the editor.
+
 ## [v1.0.0]
 
 ### Added

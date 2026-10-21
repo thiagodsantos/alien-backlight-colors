@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using AlienCommandCenter.Services;
 using AlienCommandCenter.ViewModels;
 
@@ -8,16 +10,50 @@ namespace AlienCommandCenter;
 
 public partial class MainWindow : Window
 {
+    private const int WmInput = 0x00FF;
+    private const uint RidevInputSink = 0x00000100;
+
     private readonly AlienwareAwElcKeyboardLightingService _lightingService = new();
+    private HwndSource? _windowSource;
 
     public MainWindow()
     {
         InitializeComponent();
+        SourceInitialized += OnSourceInitialized;
         DataContext = new MainViewModel(new PresetStore(), _lightingService);
+    }
+
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        _windowSource = HwndSource.FromHwnd(handle);
+        _windowSource?.AddHook(WindowProc);
+
+        var keyboard = new RawInputDevice
+        {
+            UsagePage = 0x01,
+            Usage = 0x06,
+            Flags = RidevInputSink,
+            Target = handle
+        };
+        _ = RegisterRawInputDevices(ref keyboard, 1, (uint)Marshal.SizeOf<RawInputDevice>());
+    }
+
+    private IntPtr WindowProc(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message != WmInput)
+        {
+            return IntPtr.Zero;
+        }
+
+        _ = _lightingService.RefreshBacklightAsync();
+        handled = true;
+        return DefWindowProc(hwnd, (uint)message, wParam, lParam);
     }
 
     protected override void OnClosed(EventArgs e)
     {
+        _windowSource?.RemoveHook(WindowProc);
         _lightingService.Dispose();
         base.OnClosed(e);
     }
@@ -68,6 +104,22 @@ public partial class MainWindow : Window
             MessageBox.Show(this, $"Could not start the AWCC uninstaller: {exception.Message}", "AWCC removal", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RawInputDevice
+    {
+        public ushort UsagePage;
+        public ushort Usage;
+        public uint Flags;
+        public IntPtr Target;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool RegisterRawInputDevices(ref RawInputDevice devices, uint deviceCount, uint structureSize);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr DefWindowProc(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
 
     private void PickPrimaryColor_Click(object sender, RoutedEventArgs e) => PickColor(sender, isPrimary: true);
 

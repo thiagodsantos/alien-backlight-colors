@@ -69,6 +69,11 @@ public sealed class MainViewModel : ObservableObject
 
         SelectedPreset = Presets.FirstOrDefault();
         SetStatus(loadWarning ?? deviceStatus.Message, isError: loadWarning is not null);
+
+        if (deviceStatus.IsConnected && IsBacklightOn)
+        {
+            _ = ApplyCurrentAsync();
+        }
     }
 
     public ObservableCollection<ZoneViewModel> Zones { get; }

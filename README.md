@@ -36,6 +36,7 @@ If the controller is available to Windows HID, the device badge shows **DEVICE C
 
 - Set brightness from **0% to 100%** with the global slider. Slider changes are pending until **Apply to keyboard** or **Apply preset** is used.
 - **Turn backlight off/on** applies immediately. Turning the light back on restores the selected slider brightness; `0%` sends the light-off state.
+- When a supported keyboard is detected, the app applies its current lighting on startup. While the backlight is on, it refreshes the lighting every 2 seconds and after keyboard activity so the controller's idle timeout does not leave it dark. Keep the app running for this behavior; turning the backlight off stops refreshes.
 - Saved presets include both brightness and the on/off state.
 - Direct HID access is blocked while Alienware Command Center components are registered, because AWCC can own the same controller. Use **Remove AWCC** to launch Dell's registered uninstaller; the app requests confirmation and UAC.
 - **Restore default** applies static red at 100% brightness to all four zones; it does not perform a firmware factory reset.

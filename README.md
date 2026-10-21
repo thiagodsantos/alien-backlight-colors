@@ -20,9 +20,9 @@ dotnet run --project AlienCommandCenter.csproj
 ## GitHub Actions releases
 
 - `.github/workflows/build-release.yml` builds the app on pushes, pull requests, and manual runs.
-- To publish automatically, add a `## [vX.Y.Z]` section to `CHANGELOG.md`, then push a matching `v*` tag such as `v1.0.0`.
-- To publish manually, open **Actions → Build and Release → Run workflow** and enter an existing tag in `release_tag`. Leaving it blank runs a build only, so the release job is skipped.
-- The workflow checks out the selected tag and publishes its matching changelog section plus a self-contained Windows x64 ZIP as a GitHub Release asset.
+- To publish automatically, bump `VERSION` and add a matching `## [vX.Y.Z]` section to `CHANGELOG.md`.
+- Push the change to `main`, or run **Actions → Build and Release → Run workflow** from `main`. If the version tag does not exist, the workflow creates `v<VERSION>` and publishes a GitHub Release with the matching changelog section and a self-contained Windows x64 ZIP.
+- If `v<VERSION>` already exists, the workflow performs a build only; bump `VERSION` for the next release.
 
 If the controller is available to Windows HID, the device badge shows **DEVICE CONNECTED**. Otherwise, the app remains usable for editing and presets in preview mode and displays the controller error.
 

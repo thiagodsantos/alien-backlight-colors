@@ -1,0 +1,101 @@
+name: Build and Release
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows app
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore AlienCommandCenter.csproj
+
+      - name: Build
+        run: dotnet build AlienCommandCenter.csproj --configuration Release --no-restore
+
+      - name: Publish self-contained Windows x64 app
+        run: dotnet publish AlienCommandCenter.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output publish
+
+      - name: Package app and documentation
+        shell: pwsh
+        run: |
+          $bundle = Join-Path $env:RUNNER_TEMP 'AlienwareKeyboardStudio'
+          New-Item -ItemType Directory -Path $bundle -Force | Out-Null
+          New-Item -ItemType Directory -Path 'dist' -Force | Out-Null
+          Copy-Item -Path 'publish\*' -Destination $bundle -Recurse -Force
+          Copy-Item -Path 'README.md', 'CHANGELOG.md', 'THIRD_PARTY_NOTICES.md' -Destination $bundle -Force
+          Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath 'dist\AlienwareKeyboardStudio-win-x64.zip' -Force
+
+      - name: Extract changelog section for this tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $headingPattern = '^## \[' + [regex]::Escape($tag) + '\](?:\s|$)'
+          $lines = Get-Content -Path 'CHANGELOG.md'
+          $start = -1
+          for ($index = 0; $index -lt $lines.Count; $index++) {
+            if ($lines[$index] -match $headingPattern) {
+              $start = $index
+              break
+            }
+          }
+          if ($start -lt 0) {
+            throw "CHANGELOG.md must contain a section titled '## [$tag]' before publishing this tag."
+          }
+          $notes = [System.Collections.Generic.List[string]]::new()
+          for ($index = $start + 1; $index -lt $lines.Count; $index++) {
+            if ($lines[$index] -match '^## \[') { break }
+            $notes.Add($lines[$index])
+          }
+          $releaseNotes = ($notes -join "`n").Trim()
+          if ([string]::IsNullOrWhiteSpace($releaseNotes)) {
+            throw "The CHANGELOG.md section for '$tag' is empty."
+          }
+          Set-Content -Path 'dist\release-notes.md' -Value $releaseNotes -Encoding utf8
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlienwareKeyboardStudio-win-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download packaged app and release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: AlienwareKeyboardStudio-win-x64
+          path: release-assets
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Alienware Keyboard Studio ${{ github.ref_name }}
+          body_path: release-assets/release-notes.md
+          files: release-assets/AlienwareKeyboardStudio-win-x64.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: false

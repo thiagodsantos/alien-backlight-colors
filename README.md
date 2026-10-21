@@ -17,6 +17,12 @@ dotnet build AlienCommandCenter.csproj
 dotnet run --project AlienCommandCenter.csproj
 ```
 
+## GitHub Actions releases
+
+- `.github/workflows/build-release.yml` builds the app on pushes, pull requests, and manual runs.
+- To publish a release, add a `## [vX.Y.Z]` section to `CHANGELOG.md`, then push a matching tag such as `v1.0.0`.
+- The workflow publishes the matching changelog section and a self-contained Windows x64 ZIP as a GitHub Release asset.
+
 If the controller is available to Windows HID, the device badge shows **DEVICE CONNECTED**. Otherwise, the app remains usable for editing and presets in preview mode and displays the controller error.
 
 ## Hardware behavior

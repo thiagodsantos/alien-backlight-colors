@@ -63,7 +63,6 @@ public sealed class PresetStore
                         var copy = zone.Copy();
                         copy.ZoneName = ZoneNames.First(name => string.Equals(name, zone.ZoneName, StringComparison.OrdinalIgnoreCase));
                         copy.ColorHex = NormalizeColor(copy.ColorHex);
-                        copy.SecondaryColorHex = NormalizeColor(copy.SecondaryColorHex);
                         copy.Speed = Math.Clamp(copy.Speed, 1, 100);
                         return copy;
                     })
@@ -141,7 +140,7 @@ public sealed class PresetStore
     }
 
     private static bool IsValidZone(ZoneConfiguration? zone) =>
-        zone is not null && IsHexColor(zone.ColorHex) && IsHexColor(zone.SecondaryColorHex) && Enum.IsDefined(zone.Effect);
+        zone is not null && IsHexColor(zone.ColorHex) && Enum.IsDefined(zone.Effect);
 
     private static bool IsValid(LightingPreset? preset)
     {

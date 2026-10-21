@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using System.Windows.Media;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
 using AlienCommandCenter.Models;
 using AlienCommandCenter.Services;
 
@@ -10,6 +12,7 @@ namespace AlienCommandCenter.ViewModels;
 public sealed class MainViewModel : ObservableObject
 {
     private readonly PresetStore _presetStore;
+    private readonly ActiveLightingStore _activeLightingStore;
     private readonly IKeyboardLightingService _lightingService;
     private readonly RelayCommand _loadPresetCommand;
     private readonly AsyncRelayCommand _applyPresetCommand;
@@ -20,12 +23,19 @@ public sealed class MainViewModel : ObservableObject
     private string _statusMessage = string.Empty;
     private bool _isStatusError;
     private int _brightness = 100;
+    private int _backlightActiveSeconds;
     private bool _isBacklightOn = true;
 
-    public MainViewModel(PresetStore presetStore, IKeyboardLightingService lightingService)
+    public MainViewModel(
+        PresetStore presetStore,
+        ActiveLightingStore activeLightingStore,
+        IKeyboardLightingService lightingService)
     {
         _presetStore = presetStore;
+        _activeLightingStore = activeLightingStore;
         _lightingService = lightingService;
+        _backlightActiveSeconds = _activeLightingStore.LoadBacklightActiveSeconds();
+        _ = _lightingService.ConfigureBacklightActiveTimeoutAsync(_backlightActiveSeconds);
 
         Zones = new ObservableCollection<ZoneViewModel>(
         [
@@ -34,6 +44,14 @@ public sealed class MainViewModel : ObservableObject
             new ZoneViewModel(KeyboardZones.AlphaRight),
             new ZoneViewModel(KeyboardZones.NumericKeypad)
         ]);
+
+        var activeLighting = _activeLightingStore.Load();
+        if (activeLighting is not null)
+        {
+            LoadZones(activeLighting.Zones);
+            Brightness = activeLighting.Brightness;
+            IsBacklightOn = activeLighting.IsBacklightOn;
+        }
 
         Presets = new ObservableCollection<LightingPreset>();
         foreach (var preset in CreateBuiltInPresets())
@@ -63,16 +81,16 @@ public sealed class MainViewModel : ObservableObject
         ApplyPresetCommand = _applyPresetCommand;
         RenamePresetCommand = _renamePresetCommand;
         DeletePresetCommand = _deletePresetCommand;
-        ApplyCurrentCommand = new AsyncRelayCommand(ApplyCurrentAsync);
+        ApplyCurrentCommand = new AsyncRelayCommand(() => ApplyCurrentAsync(forceBacklightOn: true));
         ResetDeviceCommand = new AsyncRelayCommand(ResetDeviceAsync);
         ToggleBacklightCommand = new AsyncRelayCommand(ToggleBacklightAsync);
 
         SelectedPreset = Presets.FirstOrDefault();
         SetStatus(loadWarning ?? deviceStatus.Message, isError: loadWarning is not null);
 
-        if (deviceStatus.IsConnected && IsBacklightOn)
+        if (deviceStatus.IsConnected && (activeLighting is not null || IsBacklightOn))
         {
-            _ = ApplyCurrentAsync();
+            _ = ApplyCurrentAsync(forceBacklightOn: false);
         }
     }
 
@@ -100,6 +118,20 @@ public sealed class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(BrightnessLabel));
                 OnPropertyChanged(nameof(EffectiveBrightness));
                 OnPropertyChanged(nameof(BacklightToggleLabel));
+            }
+        }
+    }
+
+    public int BacklightActiveSeconds
+    {
+        get => _backlightActiveSeconds;
+        set
+        {
+            var seconds = Math.Clamp(value, 0, ActiveLightingStore.MaximumBacklightActiveSeconds);
+            if (SetProperty(ref _backlightActiveSeconds, seconds))
+            {
+                _ = _activeLightingStore.SaveBacklightActiveSeconds(seconds);
+                _ = _lightingService.ConfigureBacklightActiveTimeoutAsync(seconds);
             }
         }
     }
@@ -227,14 +259,16 @@ public sealed class MainViewModel : ObservableObject
 
         try
         {
+            var targetBrightness = preset.Brightness == 0 ? 100 : preset.Brightness;
             var result = await _lightingService.ApplyAsync(
                 preset.Zones.Select(zone => zone.Copy()).ToList(),
-                preset.IsBacklightOn ? preset.Brightness : 0);
+                targetBrightness);
             if (result.Succeeded)
             {
                 LoadZones(preset.Zones);
-                Brightness = preset.Brightness;
-                IsBacklightOn = preset.IsBacklightOn;
+                Brightness = targetBrightness;
+                IsBacklightOn = true;
+                StoreAppliedLighting(preset.Zones, Brightness, IsBacklightOn);
             }
 
             SetStatus(result.Message, isError: !result.Succeeded);
@@ -311,7 +345,7 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    private async Task ApplyCurrentAsync()
+    private async Task ApplyCurrentAsync(bool forceBacklightOn)
     {
         if (Zones.Any(zone => !zone.IsInputValid))
         {
@@ -321,7 +355,22 @@ public sealed class MainViewModel : ObservableObject
 
         try
         {
-            var result = await _lightingService.ApplyAsync(SnapshotZones(), EffectiveBrightness);
+            var zones = SnapshotZones();
+            var targetBrightness = forceBacklightOn
+                ? (Brightness == 0 ? 100 : Brightness)
+                : EffectiveBrightness;
+            var result = await _lightingService.ApplyAsync(zones, targetBrightness);
+            if (result.Succeeded)
+            {
+                if (forceBacklightOn)
+                {
+                    Brightness = targetBrightness;
+                    IsBacklightOn = true;
+                }
+
+                StoreAppliedLighting(zones, Brightness, IsBacklightOn);
+            }
+
             SetStatus(result.Message, isError: !result.Succeeded);
         }
         catch (Exception exception)
@@ -351,6 +400,7 @@ public sealed class MainViewModel : ObservableObject
                 }
 
                 IsBacklightOn = turnOn;
+                StoreAppliedLighting(staticZones, Brightness, IsBacklightOn);
                 SetStatus(
                     turnOn
                         ? $"Backlight on at {targetBrightness}% brightness."
@@ -381,7 +431,6 @@ public sealed class MainViewModel : ObservableObject
                     {
                         ZoneName = zone.ZoneName,
                         ColorHex = "#FF0000",
-                        SecondaryColorHex = "#000000",
                         Effect = LightingEffect.Static,
                         Speed = 50
                     });
@@ -389,6 +438,7 @@ public sealed class MainViewModel : ObservableObject
 
                 Brightness = 100;
                 IsBacklightOn = true;
+                StoreAppliedLighting(SnapshotZones(), Brightness, IsBacklightOn);
             }
 
             SetStatus(result.Message, isError: !result.Succeeded);
@@ -397,6 +447,11 @@ public sealed class MainViewModel : ObservableObject
         {
             SetStatus($"Could not reset keyboard lighting: {exception.Message}", isError: true);
         }
+    }
+
+    private void StoreAppliedLighting(IReadOnlyList<ZoneConfiguration> zones, int brightness, bool isBacklightOn)
+    {
+        _ = _activeLightingStore.Save(zones, brightness, isBacklightOn);
     }
 
     private List<ZoneConfiguration> SnapshotZones() => Zones.Select(zone => zone.ToConfiguration()).ToList();
@@ -429,32 +484,29 @@ public sealed class MainViewModel : ObservableObject
             "Arctic Zones",
             ["#2BD9C5", "#B8FFF1", "#2BD9C5", "#0D8D78"],
             LightingEffect.Static,
-            speed: 50,
-            secondary: "#FFFFFF");
+            speed: 50);
         yield return CreateBuiltIn(
             "Solar Zones",
             ["#FF542E", "#FFB23F", "#FF542E", "#FFD36A"],
             LightingEffect.Static,
-            speed: 50,
-            secondary: "#FFD36A");
+            speed: 50);
     }
 
     private static LightingPreset CreateBuiltIn(
         string name,
         IReadOnlyList<string> colors,
         LightingEffect effect,
-        int speed,
-        string secondary) => new()
+        int speed) => new()
     {
         Id = Guid.NewGuid(),
         Name = name,
         IsBuiltIn = true,
         Zones = new List<ZoneConfiguration>
         {
-            new() { ZoneName = KeyboardZones.AlphaLeft, ColorHex = colors[0], Effect = effect, Speed = speed, SecondaryColorHex = secondary },
-            new() { ZoneName = KeyboardZones.AlphaCenter, ColorHex = colors[1], Effect = effect, Speed = speed, SecondaryColorHex = secondary },
-            new() { ZoneName = KeyboardZones.AlphaRight, ColorHex = colors[2], Effect = effect, Speed = speed, SecondaryColorHex = secondary },
-            new() { ZoneName = KeyboardZones.NumericKeypad, ColorHex = colors[3], Effect = effect, Speed = speed, SecondaryColorHex = secondary }
+            new() { ZoneName = KeyboardZones.AlphaLeft, ColorHex = colors[0], Effect = effect, Speed = speed },
+            new() { ZoneName = KeyboardZones.AlphaCenter, ColorHex = colors[1], Effect = effect, Speed = speed },
+            new() { ZoneName = KeyboardZones.AlphaRight, ColorHex = colors[2], Effect = effect, Speed = speed },
+            new() { ZoneName = KeyboardZones.NumericKeypad, ColorHex = colors[3], Effect = effect, Speed = speed }
         }
     };
 }

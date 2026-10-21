@@ -11,4 +11,6 @@ public interface IKeyboardLightingService
     KeyboardDeviceStatus GetStatus();
     Task<HardwareResult> ApplyAsync(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent);
     Task<HardwareResult> ResetAsync();
+    Task ConfigureBacklightActiveTimeoutAsync(int seconds);
+    Task RefreshBacklightAsync();
 }

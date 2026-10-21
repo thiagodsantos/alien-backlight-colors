@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Button = System.Windows.Controls.Button;
+using Color = System.Windows.Media.Color;
 
 namespace AlienCommandCenter;
 

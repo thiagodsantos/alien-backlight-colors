@@ -124,7 +124,18 @@
                                     <Button Grid.Column="3" Content="{Binding BacklightToggleLabel}" Command="{Binding ToggleBacklightCommand}" Padding="12,8" ToolTip="Turn the keyboard backlight on or off immediately." />
                                 </Grid>
                             </Border>
-                            <TextBlock Text="Apply sends the selected brightness with the zone colors; the power toggle applies immediately." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
+                            <Grid Margin="2,0,2,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="86" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="BACKLIGHT ACTIVE FOR (SECONDS)" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                    <TextBlock Text="0 keeps it active while the app is running; otherwise it turns off after inactivity." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,4,8,0" />
+                                </StackPanel>
+                                <TextBox Grid.Column="1" Text="{Binding BacklightActiveSeconds, UpdateSourceTrigger=LostFocus}" MaxLength="5" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" ToolTip="Seconds of keyboard inactivity before the backlight turns off. Set to 0 to keep it active while the app is running." />
+                            </Grid>
+                            <TextBlock Text="Apply turns on the backlight and applies the selected brightness (100% if set to 0) and zone colors." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
                             <ItemsControl ItemsSource="{Binding Zones}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -163,18 +174,7 @@
                                                 </Grid>
                                                 <Slider Minimum="1" Maximum="100" Value="{Binding Speed, UpdateSourceTrigger=PropertyChanged}" TickFrequency="1" IsSnapToTickEnabled="False" Foreground="{StaticResource AccentBrush}" />
 
-                                                <TextBlock Text="SECONDARY COLOR" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,13,0,0" ToolTip="Dynamic effects use this zone's secondary color." />
-                                                <Grid Margin="0,5,0,0">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="29" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBox Text="{Binding SecondaryColorHex, UpdateSourceTrigger=PropertyChanged}" MaxLength="7" FontFamily="Consolas" FontSize="12" />
-                                                    <Button Grid.Column="1" Content="Pick" Padding="7,5" Margin="5,0,0,0" Click="PickSecondaryColor_Click" FontSize="10" />
-                                                    <Border Grid.Column="2" Background="{Binding SecondaryColorBrush}" BorderBrush="#45515E" BorderThickness="1" CornerRadius="5" Margin="6,0,0,0" />
-                                                </Grid>
-                                                <TextBlock Text="{Binding SecondaryColorError}" Foreground="{StaticResource DangerBrush}" FontSize="9" Margin="0,4,0,0" />
+
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -182,7 +182,7 @@
                             </ItemsControl>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
                                 <Button Content="Restore default (red)" Command="{Binding ResetDeviceCommand}" Margin="0,0,9,0" ToolTip="Applies static red to each of the four light IDs." />
-                                <Button Content="Apply to keyboard" Command="{Binding ApplyCurrentCommand}" Background="#1D6657" BorderBrush="#398875" ToolTip="Writes each zone's static color to its own APIv4 light ID." />
+                                <Button Content="Apply to keyboard" Command="{Binding ApplyCurrentCommand}" Background="#1D6657" BorderBrush="#398875" ToolTip="Turns on the backlight and applies each zone's static color." />
                             </StackPanel>
                         </StackPanel>
                     </Border>

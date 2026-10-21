@@ -17,4 +17,8 @@ public sealed class MockKeyboardLightingService : IKeyboardLightingService
 
     public Task<HardwareResult> ResetAsync() => Task.FromResult(
         new HardwareResult(false, "Hardware control is not configured, so device lighting cannot be reset."));
+
+    public Task ConfigureBacklightActiveTimeoutAsync(int seconds) => Task.CompletedTask;
+
+    public Task RefreshBacklightAsync() => Task.CompletedTask;
 }

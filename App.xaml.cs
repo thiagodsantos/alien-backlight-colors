@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Windows;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace AlienCommandCenter;
 
@@ -30,7 +32,7 @@ public partial class App : Application
         if (existingProcessId != 0)
         {
             MessageBox.Show(
-                $"Another Alienware Keyboard Studio instance is already running (PID {existingProcessId}). Close it before opening this version so both apps do not compete for the keyboard controller.",
+                $"Alienware Keyboard Studio is already running in the notification area (PID {existingProcessId}). Restore it from there instead of starting a second controller instance.",
                 "Keyboard controller already in use",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
@@ -45,7 +47,7 @@ public partial class App : Application
         if (!_ownsInstanceMutex)
         {
             MessageBox.Show(
-                "Another Alienware Keyboard Studio instance is already using the keyboard controller.",
+                "Alienware Keyboard Studio is already running in the notification area. Restore it from there instead of starting a second controller instance.",
                 "Keyboard controller already in use",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);

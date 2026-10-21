@@ -1,4 +1,8 @@
 using System.Windows.Media;
+using Brush = System.Windows.Media.Brush;
+using Color = System.Windows.Media.Color;
+using ColorConverter = System.Windows.Media.ColorConverter;
+using SolidColorBrush = System.Windows.Media.SolidColorBrush;
 using AlienCommandCenter.Models;
 
 namespace AlienCommandCenter.ViewModels;
@@ -9,8 +13,6 @@ public sealed class ZoneViewModel : ObservableObject
 
     private string _colorHex;
     private string _validColorHex;
-    private string _secondaryColorHex;
-    private string _validSecondaryColorHex;
     private string _selectedEffect;
     private int _speed;
 
@@ -20,8 +22,6 @@ public sealed class ZoneViewModel : ObservableObject
         configuration ??= new ZoneConfiguration { ZoneName = zoneName };
         _validColorHex = NormalizeColor(configuration.ColorHex, "#69E0C1");
         _colorHex = _validColorHex;
-        _validSecondaryColorHex = NormalizeColor(configuration.SecondaryColorHex, "#FFFFFF");
-        _secondaryColorHex = _validSecondaryColorHex;
         _selectedEffect = Enum.IsDefined(configuration.Effect) ? configuration.Effect.ToString() : LightingEffect.Static.ToString();
         _speed = Math.Clamp(configuration.Speed, 1, 100);
     }
@@ -51,27 +51,6 @@ public sealed class ZoneViewModel : ObservableObject
         }
     }
 
-    public string SecondaryColorHex
-    {
-        get => _secondaryColorHex;
-        set
-        {
-            if (!SetProperty(ref _secondaryColorHex, value))
-            {
-                return;
-            }
-
-            if (IsHexColor(value))
-            {
-                _validSecondaryColorHex = NormalizeColor(value, _validSecondaryColorHex);
-            }
-
-            OnPropertyChanged(nameof(SecondaryColorBrush));
-            OnPropertyChanged(nameof(SecondaryColorError));
-            OnPropertyChanged(nameof(IsInputValid));
-        }
-    }
-
     public string SelectedEffect
     {
         get => _selectedEffect;
@@ -91,24 +70,20 @@ public sealed class ZoneViewModel : ObservableObject
     }
 
     public Brush ColorBrush => CreateBrush(_validColorHex);
-    public Brush SecondaryColorBrush => CreateBrush(_validSecondaryColorHex);
     public string ColorError => IsHexColor(ColorHex) ? string.Empty : "Enter a 6-digit hex color.";
-    public string SecondaryColorError => IsHexColor(SecondaryColorHex) ? string.Empty : "Enter a 6-digit hex color.";
-    public bool IsInputValid => IsHexColor(ColorHex) && IsHexColor(SecondaryColorHex);
+    public bool IsInputValid => IsHexColor(ColorHex);
 
     public ZoneConfiguration ToConfiguration() => new()
     {
         ZoneName = ZoneName,
         ColorHex = _validColorHex,
         Effect = Enum.TryParse<LightingEffect>(SelectedEffect, out var effect) ? effect : LightingEffect.Static,
-        Speed = Speed,
-        SecondaryColorHex = _validSecondaryColorHex
+        Speed = Speed
     };
 
     public void Load(ZoneConfiguration configuration)
     {
         ColorHex = NormalizeColor(configuration.ColorHex, "#69E0C1");
-        SecondaryColorHex = NormalizeColor(configuration.SecondaryColorHex, "#FFFFFF");
         SelectedEffect = Enum.IsDefined(configuration.Effect) ? configuration.Effect.ToString() : LightingEffect.Static.ToString();
         Speed = configuration.Speed;
     }

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using Timer = System.Threading.Timer;
 using Microsoft.Win32;
 using AlienCommandCenter.Models;
 
@@ -11,11 +12,17 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
     private static readonly byte[] ApiV4LightIds = [8, 9, 10, 11];
     private static readonly SemaphoreSlim ControllerLock = new(1, 1);
     private static readonly TimeSpan KeepAliveInterval = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan AlwaysOnSignalInterval = TimeSpan.FromSeconds(30);
     private ControllerConnection? _controller;
     private Timer? _keepAliveTimer;
+    private Timer? _idleOffTimer;
+    private Timer? _alwaysOnSignalTimer;
     private ZoneConfiguration[]? _lastAppliedZones;
     private int _lastAppliedBrightness;
+    private int _backlightActiveTimeoutSeconds;
     private long _lastActivityRefreshAt;
+    private long _lastKeyboardActivityAt;
+    private volatile bool _backlightTimedOut;
     private bool _disposed;
 
     public KeyboardDeviceStatus GetStatus()
@@ -71,16 +78,31 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
         return Task.Run(() => ApplyNow(snapshot, brightnessPercent));
     }
 
+    public Task ConfigureBacklightActiveTimeoutAsync(int seconds)
+    {
+        var timeout = Math.Clamp(seconds, 0, 86400);
+        return Task.Run(() => ConfigureBacklightActiveTimeout(timeout));
+    }
+
     public Task RefreshBacklightAsync()
     {
         var now = Environment.TickCount64;
-        var previous = Interlocked.Read(ref _lastActivityRefreshAt);
-        if (now - previous < 1000 || Interlocked.CompareExchange(ref _lastActivityRefreshAt, now, previous) != previous)
+        Interlocked.Exchange(ref _lastKeyboardActivityAt, now);
+
+        if (!_backlightTimedOut)
         {
-            return Task.CompletedTask;
+            var previous = Interlocked.Read(ref _lastActivityRefreshAt);
+            if (now - previous < 1000 || Interlocked.CompareExchange(ref _lastActivityRefreshAt, now, previous) != previous)
+            {
+                return Task.CompletedTask;
+            }
+        }
+        else
+        {
+            Interlocked.Exchange(ref _lastActivityRefreshAt, now);
         }
 
-        return Task.Run(KeepBacklightOn);
+        return Task.Run(RefreshAfterKeyboardActivity);
     }
 
     public Task<HardwareResult> ResetAsync()
@@ -90,7 +112,6 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
             {
                 ZoneName = zoneName,
                 ColorHex = "#FF0000",
-                SecondaryColorHex = "#000000",
                 Effect = LightingEffect.Static,
                 Speed = 50
             })
@@ -130,18 +151,22 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
             ApplyApiV4ZoneColors(controller, orderedZones, brightnessPercent);
             _lastAppliedZones = orderedZones.Select(zone => zone.Copy()).ToArray();
             _lastAppliedBrightness = brightnessPercent;
+            _backlightTimedOut = false;
             if (brightnessPercent > 0)
             {
-                _keepAliveTimer ??= new Timer(
-                    _ => KeepBacklightOn(),
-                    null,
-                    KeepAliveInterval,
-                    KeepAliveInterval);
+                var now = Environment.TickCount64;
+                Interlocked.Exchange(ref _lastKeyboardActivityAt, now);
+                Interlocked.Exchange(ref _lastActivityRefreshAt, now);
+                StartKeepAliveTimer();
+                UpdateAlwaysOnSignalTimer();
+                ScheduleIdleOffTimer();
             }
             else
             {
                 _keepAliveTimer?.Dispose();
                 _keepAliveTimer = null;
+                _idleOffTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+                _alwaysOnSignalTimer?.Change(Timeout.Infinite, Timeout.Infinite);
             }
 
             return new HardwareResult(true, $"Applied the four zone colors independently at {brightnessPercent}% brightness.");
@@ -157,12 +182,81 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
         }
     }
 
-    private void KeepBacklightOn()
+    private void ConfigureBacklightActiveTimeout(int seconds)
+    {
+        ControllerLock.Wait();
+        try
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _backlightActiveTimeoutSeconds = seconds;
+            Interlocked.Exchange(ref _lastKeyboardActivityAt, Environment.TickCount64);
+            Interlocked.Exchange(ref _lastActivityRefreshAt, Environment.TickCount64);
+
+            if (seconds == 0)
+            {
+                _idleOffTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+                if (_lastAppliedBrightness > 0 && _lastAppliedZones is not null)
+                {
+                    var controller = GetOrOpenController();
+                    ApplyApiV4ZoneColors(controller, _lastAppliedZones, _lastAppliedBrightness);
+                    _backlightTimedOut = false;
+                    StartKeepAliveTimer();
+                }
+
+                UpdateAlwaysOnSignalTimer();
+                return;
+            }
+
+            _alwaysOnSignalTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            ScheduleIdleOffTimer();
+        }
+        catch
+        {
+            DisposeControllerHandle();
+        }
+        finally
+        {
+            ControllerLock.Release();
+        }
+    }
+
+    private void RefreshAfterKeyboardActivity()
     {
         ControllerLock.Wait();
         try
         {
             if (_disposed || _lastAppliedBrightness == 0 || _lastAppliedZones is null)
+            {
+                return;
+            }
+
+            var controller = GetOrOpenController();
+            ApplyApiV4ZoneColors(controller, _lastAppliedZones, _lastAppliedBrightness);
+            _backlightTimedOut = false;
+            StartKeepAliveTimer();
+            UpdateAlwaysOnSignalTimer();
+            ScheduleIdleOffTimer();
+        }
+        catch
+        {
+            DisposeControllerHandle();
+        }
+        finally
+        {
+            ControllerLock.Release();
+        }
+    }
+
+    private void KeepBacklightOn()
+    {
+        ControllerLock.Wait();
+        try
+        {
+            if (_disposed || _backlightTimedOut || _lastAppliedBrightness == 0 || _lastAppliedZones is null)
             {
                 return;
             }
@@ -178,6 +272,116 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
         {
             ControllerLock.Release();
         }
+    }
+
+    private void ForceBacklightOn()
+    {
+        ControllerLock.Wait();
+        try
+        {
+            if (_disposed || _backlightActiveTimeoutSeconds != 0 ||
+                _lastAppliedBrightness == 0 || _lastAppliedZones is null)
+            {
+                return;
+            }
+
+            DisposeControllerHandle();
+            var controller = GetOrOpenController();
+            ApplyApiV4ZoneColors(controller, _lastAppliedZones, _lastAppliedBrightness);
+            _backlightTimedOut = false;
+            StartKeepAliveTimer();
+            UpdateAlwaysOnSignalTimer();
+        }
+        catch
+        {
+            DisposeControllerHandle();
+        }
+        finally
+        {
+            ControllerLock.Release();
+        }
+    }
+
+    private void TurnBacklightOffAfterInactivity()
+    {
+        ControllerLock.Wait();
+        try
+        {
+            if (_disposed || _backlightTimedOut || _backlightActiveTimeoutSeconds == 0 ||
+                _lastAppliedBrightness == 0 || _lastAppliedZones is null)
+            {
+                return;
+            }
+
+            var elapsed = Environment.TickCount64 - Interlocked.Read(ref _lastKeyboardActivityAt);
+            var remaining = (_backlightActiveTimeoutSeconds * 1000L) - elapsed;
+            if (remaining > 0)
+            {
+                _idleOffTimer?.Change((int)remaining, Timeout.Infinite);
+                return;
+            }
+
+            var controller = GetOrOpenController();
+            ApplyApiV4ZoneColors(controller, _lastAppliedZones, brightnessPercent: 0);
+            _backlightTimedOut = true;
+            _keepAliveTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            _alwaysOnSignalTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+        catch
+        {
+            DisposeControllerHandle();
+        }
+        finally
+        {
+            ControllerLock.Release();
+        }
+    }
+
+    private void StartKeepAliveTimer()
+    {
+        _keepAliveTimer ??= new Timer(
+            _ => KeepBacklightOn(),
+            null,
+            Timeout.Infinite,
+            Timeout.Infinite);
+        _keepAliveTimer.Change(KeepAliveInterval, KeepAliveInterval);
+    }
+
+    private void UpdateAlwaysOnSignalTimer()
+    {
+        if (_backlightActiveTimeoutSeconds != 0 || _backlightTimedOut ||
+            _lastAppliedBrightness == 0 || _lastAppliedZones is null)
+        {
+            _alwaysOnSignalTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            return;
+        }
+
+        _alwaysOnSignalTimer ??= new Timer(
+            _ => ForceBacklightOn(),
+            null,
+            Timeout.Infinite,
+            Timeout.Infinite);
+        _alwaysOnSignalTimer.Change(AlwaysOnSignalInterval, AlwaysOnSignalInterval);
+    }
+
+    private void ScheduleIdleOffTimer()
+    {
+        if (_backlightActiveTimeoutSeconds == 0 || _backlightTimedOut ||
+            _lastAppliedBrightness == 0 || _lastAppliedZones is null)
+        {
+            _idleOffTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            return;
+        }
+
+        _idleOffTimer ??= new Timer(
+            _ => TurnBacklightOffAfterInactivity(),
+            null,
+            Timeout.Infinite,
+            Timeout.Infinite);
+        var elapsed = Environment.TickCount64 - Interlocked.Read(ref _lastKeyboardActivityAt);
+        var remaining = (_backlightActiveTimeoutSeconds * 1000L) - elapsed;
+        var dueTime = (int)Math.Clamp(remaining, 1, int.MaxValue);
+        _idleOffTimer.Change(dueTime, Timeout.Infinite);
     }
 
     private ControllerConnection GetOrOpenController()
@@ -216,9 +420,9 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
                 }
 
                 transport = WindowsHidTransport.Open(path);
-                transport.SendOutputOnly(0x21, 0x00, 0x04, 0xFF, 0xFF);
-                transport.SendOutputOnly(0x21, 0x00, 0x01, 0xFF, 0xFF);
-                return new ControllerConnection(transport);
+                var controller = new ControllerConnection(transport);
+                EnterApiV4EditMode(controller);
+                return controller;
             }
             catch (Exception exception)
             {
@@ -230,6 +434,12 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
         throw new InvalidOperationException(
             "AW-ELC HID interfaces were found, but none passed the G15 5515 check and APIv4 edit-mode commands. Close other keyboard-lighting software and check device permissions.",
             lastError);
+    }
+
+    private static void EnterApiV4EditMode(ControllerConnection controller)
+    {
+        controller.Transport.SendOutputOnly(0x21, 0x00, 0x04, 0xFF, 0xFF);
+        controller.Transport.SendOutputOnly(0x21, 0x00, 0x01, 0xFF, 0xFF);
     }
 
     private static byte[] ExtractPlatformResponse(byte[] report)
@@ -284,6 +494,10 @@ public sealed class AlienwareAwElcKeyboardLightingService : IKeyboardLightingSer
         {
             _keepAliveTimer?.Dispose();
             _keepAliveTimer = null;
+            _idleOffTimer?.Dispose();
+            _idleOffTimer = null;
+            _alwaysOnSignalTimer?.Dispose();
+            _alwaysOnSignalTimer = null;
             DisposeControllerHandle();
             _disposed = true;
         }

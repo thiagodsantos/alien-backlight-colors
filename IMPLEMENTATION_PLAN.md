@@ -13,7 +13,7 @@ The initial hardware target is the Dell G15 5515 keyboard using its AW-ELC USB H
 - Display a keyboard lighting editor with four independently configurable zones: **Left (alpha)**, **Center (alpha)**, **Right (alpha)**, and **Numeric keypad**.
 - Set a color for each zone using a color picker and a hex/RGB value input.
 - Select a lighting style per zone, starting with **Static** and adding supported effects such as **Breathing**, **Color Cycle**, and **Wave** when the device API exposes them.
-- Configure effect options where supported, such as speed, direction, and secondary color.
+- Configure effect options where supported, such as speed and direction.
 - Preview the selected colors and styles in the app before applying them.
 - Apply changes to the connected keyboard and provide clear success or actionable error feedback.
 - Provide a 0–100% global brightness control and an immediate backlight on/off toggle.

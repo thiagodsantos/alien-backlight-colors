@@ -64,7 +64,6 @@ public sealed class PresetStore
                         copy.ZoneName = ZoneNames.First(name => string.Equals(name, zone.ZoneName, StringComparison.OrdinalIgnoreCase));
                         copy.ColorHex = NormalizeColor(copy.ColorHex);
                         copy.Speed = Math.Clamp(copy.Speed, 1, 100);
-                        copy.WaveStepDelaySeconds = Math.Clamp(copy.WaveStepDelaySeconds, 1, 10);
                         return copy;
                     })
                     .ToList();

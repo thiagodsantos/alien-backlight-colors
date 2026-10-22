@@ -20,6 +20,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly RelayCommand _renamePresetCommand;
     private readonly RelayCommand _deletePresetCommand;
     private static readonly IReadOnlyList<string> AvailableEffects = Enum.GetNames<LightingEffect>();
+    private static readonly byte[] MatrixGreenPalette = [8, 16, 28, 45, 70, 110, 170, 255];
     private LightingPreset? _selectedPreset;
     private string _presetName = "My lighting preset";
     private string _selectedEffect = nameof(LightingEffect.Static);
@@ -29,7 +30,6 @@ public sealed class MainViewModel : ObservableObject
     private int _brightness = 100;
     private int _backlightActiveSeconds;
     private bool _isBacklightOn = true;
-    private int _waveStepDelaySeconds = 1;
     private CancellationTokenSource? _animationCancellation;
     private Task? _animationTask;
 
@@ -128,11 +128,6 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public int WaveStepDelaySeconds
-    {
-        get => _waveStepDelaySeconds;
-        set => SetProperty(ref _waveStepDelaySeconds, Math.Clamp(value, 1, 10));
-    }
 
     public int EffectSpeed
     {
@@ -433,9 +428,8 @@ public sealed class MainViewModel : ObservableObject
         }
 
         var speed = Math.Clamp(sharedConfiguration?.Speed ?? 50, 1, 100);
-        var waveStepDelaySeconds = Math.Clamp(sharedConfiguration?.WaveStepDelaySeconds ?? 1, 1, 10);
         var staticZones = ToStaticZones(normalizedZones);
-        var initialFrame = CreateEffectFrame(staticZones, effect, speed, waveStepDelaySeconds, 0, brightnessPercent);
+        var initialFrame = CreateEffectFrame(staticZones, effect, speed, 0, brightnessPercent);
         var result = await _lightingService.ApplyAsync(initialFrame.Zones, initialFrame.BrightnessPercent);
         if (!result.Succeeded)
         {
@@ -448,7 +442,6 @@ public sealed class MainViewModel : ObservableObject
             staticZones,
             effect,
             speed,
-            waveStepDelaySeconds,
             brightnessPercent,
             cancellation.Token);
         return new HardwareResult(true, $"Running the {effect} effect using software-generated static frames.");
@@ -512,7 +505,6 @@ public sealed class MainViewModel : ObservableObject
         IReadOnlyList<ZoneConfiguration> baseZones,
         LightingEffect effect,
         int speed,
-        int waveStepDelaySeconds,
         int brightnessPercent,
         CancellationToken cancellationToken)
     {
@@ -527,7 +519,6 @@ public sealed class MainViewModel : ObservableObject
                     baseZones,
                     effect,
                     speed,
-                    waveStepDelaySeconds,
                     stopwatch.Elapsed.TotalSeconds,
                     brightnessPercent);
                 var result = await _lightingService.ApplyAnimationFrameAsync(frame.Zones, frame.BrightnessPercent);
@@ -551,13 +542,26 @@ public sealed class MainViewModel : ObservableObject
         IReadOnlyList<ZoneConfiguration> baseZones,
         LightingEffect effect,
         int speed,
-        int waveStepDelaySeconds,
         double elapsedSeconds,
         int brightnessPercent)
     {
         var frameZones = ToStaticZones(baseZones);
         switch (effect)
         {
+            case LightingEffect.Flashing:
+            {
+                var cycleSeconds = 2.0 - (speed * 0.018);
+                var isOn = (elapsedSeconds % cycleSeconds) < (cycleSeconds / 2);
+                if (!isOn)
+                {
+                    foreach (var zone in frameZones)
+                    {
+                        zone.ColorHex = ScaleColor(zone.ColorHex, 0);
+                    }
+                }
+
+                return (frameZones, brightnessPercent);
+            }
             case LightingEffect.Breathing:
             {
                 var cycleSeconds = 6.0 - speed * 0.05;
@@ -576,14 +580,86 @@ public sealed class MainViewModel : ObservableObject
 
                 return (frameZones, brightnessPercent);
             }
+            case LightingEffect.Matrix:
+            {
+                var cycleSeconds = 5.0 - (speed * 0.04);
+                for (var index = 0; index < frameZones.Count; index++)
+                {
+                    var phase = ((elapsedSeconds / cycleSeconds) + (index * 0.25)) % 1;
+                    var pulse = (Math.Sin((phase * 2 * Math.PI) - (Math.PI / 2)) + 1) / 2;
+                    var paletteIndex = Math.Clamp(
+                        (int)Math.Round(Math.Pow(pulse, 2) * (MatrixGreenPalette.Length - 1)),
+                        0,
+                        MatrixGreenPalette.Length - 1);
+                    frameZones[index].ColorHex = $"#00{MatrixGreenPalette[paletteIndex]:X2}00";
+                }
+
+                return (frameZones, brightnessPercent);
+            }
+            case LightingEffect.PingPong:
+            {
+                var cycleSeconds = 6.0 - (speed * 0.05);
+                var cyclePosition = (elapsedSeconds % cycleSeconds) / cycleSeconds;
+                var travel = cyclePosition <= 0.5
+                    ? cyclePosition * 2 * (frameZones.Count - 1)
+                    : (1 - cyclePosition) * 2 * (frameZones.Count - 1);
+                var lowerZone = (int)Math.Floor(travel);
+                var upperZone = Math.Min(lowerZone + 1, frameZones.Count - 1);
+                var progress = travel - lowerZone;
+
+                for (var index = 0; index < frameZones.Count; index++)
+                {
+                    var zoneBrightness = lowerZone == upperZone
+                        ? (index == lowerZone ? 1 : 0)
+                        : index == lowerZone
+                            ? 1 - progress
+                            : index == upperZone ? progress : 0;
+                    frameZones[index].ColorHex = ScaleColor("#FFFFFF", zoneBrightness);
+                }
+
+                return (frameZones, brightnessPercent);
+            }
+            case LightingEffect.Tunnel:
+            {
+                var cycleSeconds = 6.0 - (speed * 0.05);
+                var cyclePosition = (elapsedSeconds % cycleSeconds) / cycleSeconds;
+                double centerBrightness;
+                double cornerBrightness;
+                if (cyclePosition < 1.0 / 3)
+                {
+                    var progress = EaseInOut(cyclePosition * 3);
+                    centerBrightness = progress;
+                    cornerBrightness = 0;
+                }
+                else if (cyclePosition < 2.0 / 3)
+                {
+                    var progress = EaseInOut((cyclePosition - (1.0 / 3)) * 3);
+                    centerBrightness = 1 - progress;
+                    cornerBrightness = progress;
+                }
+                else
+                {
+                    var progress = EaseInOut((cyclePosition - (2.0 / 3)) * 3);
+                    centerBrightness = 0;
+                    cornerBrightness = 1 - progress;
+                }
+
+                for (var index = 0; index < frameZones.Count; index++)
+                {
+                    var zoneBrightness = index is 1 or 2 ? centerBrightness : cornerBrightness;
+                    frameZones[index].ColorHex = ScaleColor("#FFFFFF", zoneBrightness);
+                }
+
+                return (frameZones, brightnessPercent);
+            }
             case LightingEffect.Wave:
             {
-                var stepDuration = Math.Clamp(waveStepDelaySeconds, 1, 10);
+                var stepDuration = 2.0 - (speed * 0.0165);
                 var step = elapsedSeconds / stepDuration;
                 var currentZone = (int)Math.Floor(step) % frameZones.Count;
                 var nextZone = (currentZone + 1) % frameZones.Count;
                 var progress = step - Math.Floor(step);
-                progress = progress * progress * (3 - (2 * progress));
+                progress = EaseInOut(progress);
                 for (var index = 0; index < frameZones.Count; index++)
                 {
                     var zoneBrightness = index == currentZone
@@ -597,6 +673,12 @@ public sealed class MainViewModel : ObservableObject
             default:
                 return (frameZones, brightnessPercent);
         }
+    }
+
+    private static double EaseInOut(double value)
+    {
+        var progress = Math.Clamp(value, 0, 1);
+        return progress * progress * (3 - (2 * progress));
     }
 
     private static List<ZoneConfiguration> ToStaticZones(IEnumerable<ZoneConfiguration> zones) => zones
@@ -700,7 +782,6 @@ public sealed class MainViewModel : ObservableObject
                 IsBacklightOn = true;
                 SelectedEffect = nameof(LightingEffect.Static);
                 EffectSpeed = 50;
-                WaveStepDelaySeconds = 1;
                 StoreAppliedLighting(SnapshotZones(), Brightness, IsBacklightOn);
             }
 
@@ -718,7 +799,7 @@ public sealed class MainViewModel : ObservableObject
     }
 
     private List<ZoneConfiguration> SnapshotZones() => Zones
-        .Select(zone => zone.ToConfiguration(SelectedLightingEffect, EffectSpeed, WaveStepDelaySeconds))
+        .Select(zone => zone.ToConfiguration(SelectedLightingEffect, EffectSpeed))
         .ToList();
 
     private void LoadZones(IEnumerable<ZoneConfiguration> configurations)
@@ -733,7 +814,6 @@ public sealed class MainViewModel : ObservableObject
                 ? sharedConfiguration.Effect.ToString()
                 : nameof(LightingEffect.Static);
             EffectSpeed = sharedConfiguration.Speed;
-            WaveStepDelaySeconds = sharedConfiguration.WaveStepDelaySeconds;
         }
 
         foreach (var zone in Zones)
@@ -757,14 +837,12 @@ public sealed class MainViewModel : ObservableObject
             ? sharedConfiguration.Effect
             : LightingEffect.Static;
         var speed = Math.Clamp(sharedConfiguration?.Speed ?? 50, 1, 100);
-        var waveStepDelaySeconds = Math.Clamp(sharedConfiguration?.WaveStepDelaySeconds ?? 1, 1, 10);
 
         return configurationList.Select(configuration =>
         {
             var copy = configuration.Copy();
             copy.Effect = effect;
             copy.Speed = speed;
-            copy.WaveStepDelaySeconds = waveStepDelaySeconds;
             return copy;
         }).ToList();
     }

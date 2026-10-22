@@ -46,13 +46,12 @@ public sealed class ZoneViewModel : ObservableObject
     public string ColorError => IsHexColor(ColorHex) ? string.Empty : "Enter a 6-digit hex color.";
     public bool IsInputValid => IsHexColor(ColorHex);
 
-    public ZoneConfiguration ToConfiguration(LightingEffect effect, int speed, int waveStepDelaySeconds) => new()
+    public ZoneConfiguration ToConfiguration(LightingEffect effect, int speed) => new()
     {
         ZoneName = ZoneName,
         ColorHex = _validColorHex,
         Effect = effect,
-        Speed = speed,
-        WaveStepDelaySeconds = waveStepDelaySeconds
+        Speed = speed
     };
 
     public void Load(ZoneConfiguration configuration)

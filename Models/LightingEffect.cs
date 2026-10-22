@@ -5,5 +5,9 @@ public enum LightingEffect
     Static,
     Breathing,
     ColorCycle,
-    Wave
+    Wave,
+    Matrix,
+    Tunnel,
+    PingPong,
+    Flashing
 }

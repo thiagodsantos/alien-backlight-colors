@@ -147,11 +147,59 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="EFFECT FOR ALL ZONES" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,6" />
-                                        <ComboBox ItemsSource="{Binding EffectOptions}" SelectedItem="{Binding SelectedEffect, UpdateSourceTrigger=PropertyChanged}" />
+                                        <ComboBox ItemsSource="{Binding EffectOptions}" SelectedItem="{Binding SelectedEffect, UpdateSourceTrigger=PropertyChanged}" Background="#0C1118" Foreground="#101820" />
                                         <TextBlock Text="Effects are generated in software using static color updates; keep the app running." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0" />
-                                        <Grid Margin="0,7,0,0">
-                                            <Grid.Style>
-                                                <Style TargetType="Grid">
+                                        <TextBlock Text="Matrix pulses through green shades across all four zones, using the selected brightness." Foreground="{StaticResource AccentBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedEffect}" Value="Matrix">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Tunnel fades white highlights across the center zones, then the outer zones, before resetting." Foreground="{StaticResource AccentBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedEffect}" Value="Tunnel">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Ping Pong moves a white highlight from left to right and back, with brightness set by the selected level." Foreground="{StaticResource AccentBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedEffect}" Value="PingPong">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Flashing alternates all zones between their selected colors and black; higher effect speed blinks faster." Foreground="{StaticResource AccentBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedEffect}" Value="Flashing">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Wave speed controls how quickly the highlight moves between zones." Foreground="{StaticResource AccentBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding SelectedEffect}" Value="Wave">
@@ -159,26 +207,10 @@
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </Grid.Style>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="56" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="WAVE STEP (SECONDS)" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1" Text="{Binding WaveStepDelaySeconds, UpdateSourceTrigger=LostFocus}" MaxLength="2" FontFamily="Consolas" FontSize="12" VerticalContentAlignment="Center" ToolTip="Seconds for the brightness wave to move from one zone to the next." />
-                                        </Grid>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
-                                        <StackPanel.Style>
-                                            <Style TargetType="StackPanel">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedEffect}" Value="Wave">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </StackPanel.Style>
                                         <Grid Margin="0,0,0,5">
                                             <TextBlock Text="EFFECT SPEED" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
                                             <TextBlock Text="{Binding EffectSpeedLabel}" HorizontalAlignment="Right" Foreground="{StaticResource TextBrush}" FontSize="10" />

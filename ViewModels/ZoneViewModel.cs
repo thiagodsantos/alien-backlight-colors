@@ -9,26 +9,17 @@ namespace AlienCommandCenter.ViewModels;
 
 public sealed class ZoneViewModel : ObservableObject
 {
-    private static readonly IReadOnlyList<string> AvailableEffects = Enum.GetNames<LightingEffect>();
-
     private string _colorHex;
     private string _validColorHex;
-    private string _selectedEffect;
-    private int _speed;
 
-    public ZoneViewModel(string zoneName, ZoneConfiguration? configuration = null)
+    public ZoneViewModel(string zoneName)
     {
         ZoneName = zoneName;
-        configuration ??= new ZoneConfiguration { ZoneName = zoneName };
-        _validColorHex = NormalizeColor(configuration.ColorHex, "#69E0C1");
+        _validColorHex = "#69E0C1";
         _colorHex = _validColorHex;
-        _selectedEffect = Enum.IsDefined(configuration.Effect) ? configuration.Effect.ToString() : LightingEffect.Static.ToString();
-        _speed = Math.Clamp(configuration.Speed, 1, 100);
     }
 
     public string ZoneName { get; }
-    public IReadOnlyList<string> EffectOptions => AvailableEffects;
-    public string SpeedLabel => $"{Speed}%";
 
     public string ColorHex
     {
@@ -51,41 +42,22 @@ public sealed class ZoneViewModel : ObservableObject
         }
     }
 
-    public string SelectedEffect
-    {
-        get => _selectedEffect;
-        set => SetProperty(ref _selectedEffect, value);
-    }
-
-    public int Speed
-    {
-        get => _speed;
-        set
-        {
-            if (SetProperty(ref _speed, Math.Clamp(value, 1, 100)))
-            {
-                OnPropertyChanged(nameof(SpeedLabel));
-            }
-        }
-    }
-
     public Brush ColorBrush => CreateBrush(_validColorHex);
     public string ColorError => IsHexColor(ColorHex) ? string.Empty : "Enter a 6-digit hex color.";
     public bool IsInputValid => IsHexColor(ColorHex);
 
-    public ZoneConfiguration ToConfiguration() => new()
+    public ZoneConfiguration ToConfiguration(LightingEffect effect, int speed, int waveStepDelaySeconds) => new()
     {
         ZoneName = ZoneName,
         ColorHex = _validColorHex,
-        Effect = Enum.TryParse<LightingEffect>(SelectedEffect, out var effect) ? effect : LightingEffect.Static,
-        Speed = Speed
+        Effect = effect,
+        Speed = speed,
+        WaveStepDelaySeconds = waveStepDelaySeconds
     };
 
     public void Load(ZoneConfiguration configuration)
     {
         ColorHex = NormalizeColor(configuration.ColorHex, "#69E0C1");
-        SelectedEffect = Enum.IsDefined(configuration.Effect) ? configuration.Effect.ToString() : LightingEffect.Static.ToString();
-        Speed = configuration.Speed;
     }
 
     private static bool IsHexColor(string? value)

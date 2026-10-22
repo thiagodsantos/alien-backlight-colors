@@ -102,6 +102,11 @@ public partial class MainWindow : Window
     {
         Application.Current.SessionEnding -= OnApplicationSessionEnding;
         _windowSource?.RemoveHook(WindowProc);
+        if (DataContext is MainViewModel viewModel)
+        {
+            viewModel.StopAnimation();
+        }
+
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
         _lightingService.Dispose();

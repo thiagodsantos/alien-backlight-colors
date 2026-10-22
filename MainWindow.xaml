@@ -87,7 +87,6 @@
                                                 <Grid>
                                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding ZoneName}" Foreground="#09100F" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
-                                                        <TextBlock Text="{Binding SelectedEffect}" Foreground="#12201D" FontSize="9" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
@@ -95,7 +94,10 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </Border>
-                            <TextBlock Text="Apply writes each zone's static color to its own AlienFX light ID. Animated effects are preview-only on this controller." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,12,2,0" />
+                            <StackPanel Orientation="Horizontal" Margin="2,12,2,0">
+                                <TextBlock Text="SHARED EFFECT" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <TextBlock Text="{Binding SelectedEffect}" Foreground="{StaticResource AccentBrush}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
@@ -104,7 +106,7 @@
                             <Grid Margin="0,0,0,15">
                                 <StackPanel>
                                     <TextBlock Text="ZONE CONTROLS" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
-                                    <TextBlock Text="Tune each section independently" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    <TextBlock Text="Colors per zone, one shared effect" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
                                 </StackPanel>
                                 <TextBlock Text="4 ZONES" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
                             </Grid>
@@ -135,7 +137,56 @@
                                 </StackPanel>
                                 <TextBox Grid.Column="1" Text="{Binding BacklightActiveSeconds, UpdateSourceTrigger=LostFocus}" MaxLength="5" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" ToolTip="Seconds of keyboard inactivity before the backlight turns off. Set to 0 to keep it active while the app is running." />
                             </Grid>
-                            <TextBlock Text="Apply turns on the backlight and applies the selected brightness (100% if set to 0) and zone colors." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
+                            <TextBlock Text="Apply starts the shared effect with the selected brightness and zone colors. A brightness of 0 applies as 100%." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
+                            <Border Background="#0C1118" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="14" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="EFFECT FOR ALL ZONES" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,6" />
+                                        <ComboBox ItemsSource="{Binding EffectOptions}" SelectedItem="{Binding SelectedEffect, UpdateSourceTrigger=PropertyChanged}" />
+                                        <TextBlock Text="Effects are generated in software using static color updates; keep the app running." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                        <Grid Margin="0,7,0,0">
+                                            <Grid.Style>
+                                                <Style TargetType="Grid">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedEffect}" Value="Wave">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Grid.Style>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="56" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="WAVE STEP (SECONDS)" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" />
+                                            <TextBox Grid.Column="1" Text="{Binding WaveStepDelaySeconds, UpdateSourceTrigger=LostFocus}" MaxLength="2" FontFamily="Consolas" FontSize="12" VerticalContentAlignment="Center" ToolTip="Seconds for the brightness wave to move from one zone to the next." />
+                                        </Grid>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedEffect}" Value="Wave">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <Grid Margin="0,0,0,5">
+                                            <TextBlock Text="EFFECT SPEED" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                            <TextBlock Text="{Binding EffectSpeedLabel}" HorizontalAlignment="Right" Foreground="{StaticResource TextBrush}" FontSize="10" />
+                                        </Grid>
+                                        <Slider Minimum="1" Maximum="100" Value="{Binding EffectSpeed, UpdateSourceTrigger=PropertyChanged}" TickFrequency="1" IsSnapToTickEnabled="False" Foreground="{StaticResource AccentBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
                             <ItemsControl ItemsSource="{Binding Zones}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -165,16 +216,6 @@
                                                 </Grid>
                                                 <TextBlock Text="{Binding ColorError}" Foreground="{StaticResource DangerBrush}" FontSize="9" Margin="0,4,0,0" />
 
-                                                <TextBlock Text="STYLE" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,13,0,5" />
-                                                <ComboBox ItemsSource="{Binding EffectOptions}" SelectedItem="{Binding SelectedEffect, UpdateSourceTrigger=PropertyChanged}" />
-
-                                                <Grid Margin="0,13,0,5">
-                                                    <TextBlock Text="EFFECT SPEED" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
-                                                    <TextBlock Text="{Binding SpeedLabel}" HorizontalAlignment="Right" Foreground="{StaticResource TextBrush}" FontSize="10" />
-                                                </Grid>
-                                                <Slider Minimum="1" Maximum="100" Value="{Binding Speed, UpdateSourceTrigger=PropertyChanged}" TickFrequency="1" IsSnapToTickEnabled="False" Foreground="{StaticResource AccentBrush}" />
-
-
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -182,7 +223,7 @@
                             </ItemsControl>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
                                 <Button Content="Restore default (red)" Command="{Binding ResetDeviceCommand}" Margin="0,0,9,0" ToolTip="Applies static red to each of the four light IDs." />
-                                <Button Content="Apply to keyboard" Command="{Binding ApplyCurrentCommand}" Background="#1D6657" BorderBrush="#398875" ToolTip="Turns on the backlight and applies each zone's static color." />
+                                <Button Content="Apply to keyboard" Command="{Binding ApplyCurrentCommand}" Background="#1D6657" BorderBrush="#398875" ToolTip="Starts the selected effect using repeated supported static color updates." />
                             </StackPanel>
                         </StackPanel>
                     </Border>

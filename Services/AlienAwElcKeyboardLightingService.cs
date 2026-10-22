@@ -43,7 +43,7 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
             return new KeyboardDeviceStatus(
                 IsConnected: true,
                 DeviceName: "AW-ELC AlienFX APIv4 keyboard",
-                Message: "HID controller opened in AlienFX APIv4 mode. Independent static colors use light IDs 8–11; animated effects are preview-only on this controller.");
+                Message: "HID controller opened in AlienFX APIv4 mode. Static color updates use light IDs 8–11; app-generated effects are sent as repeated static updates.");
         }
         catch (FileNotFoundException)
         {
@@ -72,10 +72,19 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
         }
     }
 
-    public Task<HardwareResult> ApplyAsync(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent)
+    public Task<HardwareResult> ApplyAsync(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent) =>
+        ApplyCoreAsync(zones, brightnessPercent, countsAsUserActivity: true);
+
+    public Task<HardwareResult> ApplyAnimationFrameAsync(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent) =>
+        ApplyCoreAsync(zones, brightnessPercent, countsAsUserActivity: false);
+
+    private Task<HardwareResult> ApplyCoreAsync(
+        IReadOnlyList<ZoneConfiguration> zones,
+        int brightnessPercent,
+        bool countsAsUserActivity)
     {
         var snapshot = zones.Select(zone => zone.Copy()).ToArray();
-        return Task.Run(() => ApplyNow(snapshot, brightnessPercent));
+        return Task.Run(() => ApplyNow(snapshot, brightnessPercent, countsAsUserActivity));
     }
 
     public Task ConfigureBacklightActiveTimeoutAsync(int seconds)
@@ -119,7 +128,10 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
         return ApplyAsync(defaults, brightnessPercent: 100);
     }
 
-    private HardwareResult ApplyNow(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent)
+    private HardwareResult ApplyNow(
+        IReadOnlyList<ZoneConfiguration> zones,
+        int brightnessPercent,
+        bool countsAsUserActivity)
     {
         if (brightnessPercent is < 0 or > 100)
         {
@@ -141,12 +153,19 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
         {
             return new HardwareResult(
                 false,
-                "The verified G15 5515 APIv4 interface supports independent static zone colors. Select Static on all zones; animated effects are preview-only for this device.");
+                "The verified G15 5515 APIv4 interface accepts static color frames only. App-generated animation must be sent as static frames.");
         }
 
         ControllerLock.Wait();
         try
         {
+            if (!countsAsUserActivity && _backlightTimedOut)
+            {
+                _lastAppliedZones = orderedZones.Select(zone => zone.Copy()).ToArray();
+                _lastAppliedBrightness = brightnessPercent;
+                return new HardwareResult(true, "Animation frame queued until keyboard activity resumes.");
+            }
+
             var controller = GetOrOpenController();
             ApplyApiV4ZoneColors(controller, orderedZones, brightnessPercent);
             _lastAppliedZones = orderedZones.Select(zone => zone.Copy()).ToArray();
@@ -154,9 +173,13 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
             _backlightTimedOut = false;
             if (brightnessPercent > 0)
             {
-                var now = Environment.TickCount64;
-                Interlocked.Exchange(ref _lastKeyboardActivityAt, now);
-                Interlocked.Exchange(ref _lastActivityRefreshAt, now);
+                if (countsAsUserActivity)
+                {
+                    var now = Environment.TickCount64;
+                    Interlocked.Exchange(ref _lastKeyboardActivityAt, now);
+                    Interlocked.Exchange(ref _lastActivityRefreshAt, now);
+                }
+
                 StartKeepAliveTimer();
                 UpdateAlwaysOnSignalTimer();
                 ScheduleIdleOffTimer();

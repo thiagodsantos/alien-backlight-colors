@@ -112,7 +112,7 @@ public sealed class ActiveLightingStore
         {
             if (zone is null || string.IsNullOrWhiteSpace(zone.ZoneName) ||
                 !IsHexColor(zone.ColorHex) || !Enum.IsDefined(zone.Effect) || zone.Speed is < 1 or > 100 ||
-                !zonesByName.TryAdd(zone.ZoneName, zone))
+                zone.WaveStepDelaySeconds is < 1 or > 10 || !zonesByName.TryAdd(zone.ZoneName, zone))
             {
                 return false;
             }

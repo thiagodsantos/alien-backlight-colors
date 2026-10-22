@@ -15,6 +15,9 @@ public sealed class MockKeyboardLightingService : IKeyboardLightingService
     public Task<HardwareResult> ApplyAsync(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent) => Task.FromResult(
         new HardwareResult(false, "Hardware control is not configured. Your lighting remains available in the editor and presets."));
 
+    public Task<HardwareResult> ApplyAnimationFrameAsync(IReadOnlyList<ZoneConfiguration> zones, int brightnessPercent) =>
+        ApplyAsync(zones, brightnessPercent);
+
     public Task<HardwareResult> ResetAsync() => Task.FromResult(
         new HardwareResult(false, "Hardware control is not configured, so device lighting cannot be reset."));
 

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using System.Windows.Media;
@@ -18,13 +19,19 @@ public sealed class MainViewModel : ObservableObject
     private readonly AsyncRelayCommand _applyPresetCommand;
     private readonly RelayCommand _renamePresetCommand;
     private readonly RelayCommand _deletePresetCommand;
+    private static readonly IReadOnlyList<string> AvailableEffects = Enum.GetNames<LightingEffect>();
     private LightingPreset? _selectedPreset;
     private string _presetName = "My lighting preset";
+    private string _selectedEffect = nameof(LightingEffect.Static);
+    private int _effectSpeed = 50;
     private string _statusMessage = string.Empty;
     private bool _isStatusError;
     private int _brightness = 100;
     private int _backlightActiveSeconds;
     private bool _isBacklightOn = true;
+    private int _waveStepDelaySeconds = 1;
+    private CancellationTokenSource? _animationCancellation;
+    private Task? _animationTask;
 
     public MainViewModel(
         PresetStore presetStore,
@@ -96,6 +103,7 @@ public sealed class MainViewModel : ObservableObject
 
     public ObservableCollection<ZoneViewModel> Zones { get; }
     public ObservableCollection<LightingPreset> Presets { get; }
+    public IReadOnlyList<string> EffectOptions => AvailableEffects;
 
     public string DeviceHeadline { get; }
     public string DeviceDescription { get; }
@@ -107,6 +115,38 @@ public sealed class MainViewModel : ObservableObject
         get => _presetName;
         set => SetProperty(ref _presetName, value);
     }
+
+    public string SelectedEffect
+    {
+        get => _selectedEffect;
+        set
+        {
+            if (Enum.TryParse<LightingEffect>(value, out var effect) && Enum.IsDefined(effect))
+            {
+                SetProperty(ref _selectedEffect, effect.ToString());
+            }
+        }
+    }
+
+    public int WaveStepDelaySeconds
+    {
+        get => _waveStepDelaySeconds;
+        set => SetProperty(ref _waveStepDelaySeconds, Math.Clamp(value, 1, 10));
+    }
+
+    public int EffectSpeed
+    {
+        get => _effectSpeed;
+        set
+        {
+            if (SetProperty(ref _effectSpeed, Math.Clamp(value, 1, 100)))
+            {
+                OnPropertyChanged(nameof(EffectSpeedLabel));
+            }
+        }
+    }
+
+    public string EffectSpeedLabel => $"{EffectSpeed}%";
 
     public int Brightness
     {
@@ -260,15 +300,14 @@ public sealed class MainViewModel : ObservableObject
         try
         {
             var targetBrightness = preset.Brightness == 0 ? 100 : preset.Brightness;
-            var result = await _lightingService.ApplyAsync(
-                preset.Zones.Select(zone => zone.Copy()).ToList(),
-                targetBrightness);
+            var zones = NormalizeSharedEffect(preset.Zones);
+            var result = await ApplyZonesWithEffectAsync(zones, targetBrightness);
             if (result.Succeeded)
             {
-                LoadZones(preset.Zones);
+                LoadZones(zones);
                 Brightness = targetBrightness;
                 IsBacklightOn = true;
-                StoreAppliedLighting(preset.Zones, Brightness, IsBacklightOn);
+                StoreAppliedLighting(zones, Brightness, IsBacklightOn);
             }
 
             SetStatus(result.Message, isError: !result.Succeeded);
@@ -359,7 +398,7 @@ public sealed class MainViewModel : ObservableObject
             var targetBrightness = forceBacklightOn
                 ? (Brightness == 0 ? 100 : Brightness)
                 : EffectiveBrightness;
-            var result = await _lightingService.ApplyAsync(zones, targetBrightness);
+            var result = await ApplyZonesWithEffectAsync(zones, targetBrightness);
             if (result.Succeeded)
             {
                 if (forceBacklightOn)
@@ -379,19 +418,239 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    private async Task<HardwareResult> ApplyZonesWithEffectAsync(
+        IReadOnlyList<ZoneConfiguration> zones,
+        int brightnessPercent)
+    {
+        await StopAnimationAsync();
+
+        var normalizedZones = NormalizeSharedEffect(zones);
+        var sharedConfiguration = normalizedZones.FirstOrDefault();
+        var effect = sharedConfiguration?.Effect ?? LightingEffect.Static;
+        if (effect == LightingEffect.Static || brightnessPercent == 0)
+        {
+            return await ApplyStaticZonesAsync(normalizedZones, brightnessPercent);
+        }
+
+        var speed = Math.Clamp(sharedConfiguration?.Speed ?? 50, 1, 100);
+        var waveStepDelaySeconds = Math.Clamp(sharedConfiguration?.WaveStepDelaySeconds ?? 1, 1, 10);
+        var staticZones = ToStaticZones(normalizedZones);
+        var initialFrame = CreateEffectFrame(staticZones, effect, speed, waveStepDelaySeconds, 0, brightnessPercent);
+        var result = await _lightingService.ApplyAsync(initialFrame.Zones, initialFrame.BrightnessPercent);
+        if (!result.Succeeded)
+        {
+            return result;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        _animationCancellation = cancellation;
+        _animationTask = RunEffectAsync(
+            staticZones,
+            effect,
+            speed,
+            waveStepDelaySeconds,
+            brightnessPercent,
+            cancellation.Token);
+        return new HardwareResult(true, $"Running the {effect} effect using software-generated static frames.");
+    }
+
+    private async Task<HardwareResult> ApplyStaticZonesAsync(
+        IReadOnlyList<ZoneConfiguration> zones,
+        int brightnessPercent)
+    {
+        await StopAnimationAsync();
+        return await _lightingService.ApplyAsync(ToStaticZones(zones), brightnessPercent);
+    }
+
+    private async Task StopAnimationAsync()
+    {
+        var cancellation = _animationCancellation;
+        if (cancellation is null)
+        {
+            return;
+        }
+
+        _animationCancellation = null;
+        cancellation.Cancel();
+        var animationTask = _animationTask;
+        _animationTask = null;
+        if (animationTask is not null)
+        {
+            try
+            {
+                await animationTask;
+            }
+            finally
+            {
+                cancellation.Dispose();
+            }
+        }
+        else
+        {
+            cancellation.Dispose();
+        }
+    }
+
+    public void StopAnimation()
+    {
+        var cancellation = _animationCancellation;
+        _animationCancellation = null;
+        cancellation?.Cancel();
+        if (cancellation is not null && _animationTask is { } animationTask)
+        {
+            _ = animationTask.ContinueWith(
+                _ => cancellation.Dispose(),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
+
+        _animationTask = null;
+    }
+
+    private async Task RunEffectAsync(
+        IReadOnlyList<ZoneConfiguration> baseZones,
+        LightingEffect effect,
+        int speed,
+        int waveStepDelaySeconds,
+        int brightnessPercent,
+        CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var frameInterval = TimeSpan.FromMilliseconds(Math.Clamp(230 - speed * 1.5, 80, 220));
+        try
+        {
+            while (true)
+            {
+                await Task.Delay(frameInterval, cancellationToken);
+                var frame = CreateEffectFrame(
+                    baseZones,
+                    effect,
+                    speed,
+                    waveStepDelaySeconds,
+                    stopwatch.Elapsed.TotalSeconds,
+                    brightnessPercent);
+                var result = await _lightingService.ApplyAnimationFrameAsync(frame.Zones, frame.BrightnessPercent);
+                if (!result.Succeeded)
+                {
+                    SetStatus(result.Message, isError: true);
+                    return;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"The {effect} effect stopped: {exception.GetBaseException().Message}", isError: true);
+        }
+    }
+
+    private static (List<ZoneConfiguration> Zones, int BrightnessPercent) CreateEffectFrame(
+        IReadOnlyList<ZoneConfiguration> baseZones,
+        LightingEffect effect,
+        int speed,
+        int waveStepDelaySeconds,
+        double elapsedSeconds,
+        int brightnessPercent)
+    {
+        var frameZones = ToStaticZones(baseZones);
+        switch (effect)
+        {
+            case LightingEffect.Breathing:
+            {
+                var cycleSeconds = 6.0 - speed * 0.05;
+                var breath = (Math.Sin((elapsedSeconds / cycleSeconds * 2 * Math.PI) - (Math.PI / 2)) + 1) / 2;
+                var brightnessScale = 0.12 + (0.88 * breath);
+                var frameBrightness = Math.Clamp((int)Math.Round(brightnessPercent * brightnessScale), 1, 100);
+                return (frameZones, frameBrightness);
+            }
+            case LightingEffect.ColorCycle:
+            {
+                var degreesPerSecond = 18 + (speed * 1.5);
+                for (var index = 0; index < frameZones.Count; index++)
+                {
+                    frameZones[index].ColorHex = CreateRainbowColor(elapsedSeconds * degreesPerSecond + (index * 90));
+                }
+
+                return (frameZones, brightnessPercent);
+            }
+            case LightingEffect.Wave:
+            {
+                var stepDuration = Math.Clamp(waveStepDelaySeconds, 1, 10);
+                var step = elapsedSeconds / stepDuration;
+                var currentZone = (int)Math.Floor(step) % frameZones.Count;
+                var nextZone = (currentZone + 1) % frameZones.Count;
+                var progress = step - Math.Floor(step);
+                progress = progress * progress * (3 - (2 * progress));
+                for (var index = 0; index < frameZones.Count; index++)
+                {
+                    var zoneBrightness = index == currentZone
+                        ? 1 - progress
+                        : index == nextZone ? progress : 0;
+                    frameZones[index].ColorHex = ScaleColor(frameZones[index].ColorHex, zoneBrightness);
+                }
+
+                return (frameZones, brightnessPercent);
+            }
+            default:
+                return (frameZones, brightnessPercent);
+        }
+    }
+
+    private static List<ZoneConfiguration> ToStaticZones(IEnumerable<ZoneConfiguration> zones) => zones
+        .Select(zone =>
+        {
+            var copy = zone.Copy();
+            copy.Effect = LightingEffect.Static;
+            return copy;
+        })
+        .ToList();
+
+    private static string CreateRainbowColor(double hueDegrees)
+    {
+        var hue = ((hueDegrees % 360) + 360) % 360;
+        var sector = (int)(hue / 60);
+        var fraction = (hue / 60) - sector;
+        var secondary = 1 - Math.Abs((2 * fraction) - 1);
+        var (red, green, blue) = sector switch
+        {
+            0 => (1.0, secondary, 0.0),
+            1 => (secondary, 1.0, 0.0),
+            2 => (0.0, 1.0, secondary),
+            3 => (0.0, secondary, 1.0),
+            4 => (secondary, 0.0, 1.0),
+            _ => (1.0, 0.0, secondary)
+        };
+        return $"#{(int)Math.Round(red * 255):X2}{(int)Math.Round(green * 255):X2}{(int)Math.Round(blue * 255):X2}";
+    }
+
+    private static string ScaleColor(string colorHex, double scale)
+    {
+        var digits = colorHex.Trim().TrimStart('#');
+        if (digits.Length != 6)
+        {
+            return colorHex;
+        }
+
+        var red = (int)Math.Round(Convert.ToByte(digits[..2], 16) * scale);
+        var green = (int)Math.Round(Convert.ToByte(digits.Substring(2, 2), 16) * scale);
+        var blue = (int)Math.Round(Convert.ToByte(digits.Substring(4, 2), 16) * scale);
+        return $"#{red:X2}{green:X2}{blue:X2}";
+    }
+
     private async Task ToggleBacklightAsync()
     {
         var turnOn = EffectiveBrightness == 0;
         var targetBrightness = turnOn ? (Brightness == 0 ? 100 : Brightness) : 0;
-        var staticZones = SnapshotZones();
-        foreach (var zone in staticZones)
-        {
-            zone.Effect = LightingEffect.Static;
-        }
+        var zones = SnapshotZones();
 
         try
         {
-            var result = await _lightingService.ApplyAsync(staticZones, targetBrightness);
+            var result = turnOn
+                ? await ApplyZonesWithEffectAsync(zones, targetBrightness)
+                : await ApplyStaticZonesAsync(zones, targetBrightness);
             if (result.Succeeded)
             {
                 if (turnOn && Brightness == 0)
@@ -400,7 +659,7 @@ public sealed class MainViewModel : ObservableObject
                 }
 
                 IsBacklightOn = turnOn;
-                StoreAppliedLighting(staticZones, Brightness, IsBacklightOn);
+                StoreAppliedLighting(SnapshotZones(), Brightness, IsBacklightOn);
                 SetStatus(
                     turnOn
                         ? $"Backlight on at {targetBrightness}% brightness."
@@ -422,6 +681,7 @@ public sealed class MainViewModel : ObservableObject
     {
         try
         {
+            await StopAnimationAsync();
             var result = await _lightingService.ResetAsync();
             if (result.Succeeded)
             {
@@ -438,6 +698,9 @@ public sealed class MainViewModel : ObservableObject
 
                 Brightness = 100;
                 IsBacklightOn = true;
+                SelectedEffect = nameof(LightingEffect.Static);
+                EffectSpeed = 50;
+                WaveStepDelaySeconds = 1;
                 StoreAppliedLighting(SnapshotZones(), Brightness, IsBacklightOn);
             }
 
@@ -454,13 +717,28 @@ public sealed class MainViewModel : ObservableObject
         _ = _activeLightingStore.Save(zones, brightness, isBacklightOn);
     }
 
-    private List<ZoneConfiguration> SnapshotZones() => Zones.Select(zone => zone.ToConfiguration()).ToList();
+    private List<ZoneConfiguration> SnapshotZones() => Zones
+        .Select(zone => zone.ToConfiguration(SelectedLightingEffect, EffectSpeed, WaveStepDelaySeconds))
+        .ToList();
 
     private void LoadZones(IEnumerable<ZoneConfiguration> configurations)
     {
+        var configurationList = configurations.ToList();
+        var sharedConfiguration = configurationList.FirstOrDefault(configuration =>
+            string.Equals(configuration.ZoneName, KeyboardZones.AlphaLeft, StringComparison.OrdinalIgnoreCase))
+            ?? configurationList.FirstOrDefault();
+        if (sharedConfiguration is not null)
+        {
+            SelectedEffect = Enum.IsDefined(sharedConfiguration.Effect)
+                ? sharedConfiguration.Effect.ToString()
+                : nameof(LightingEffect.Static);
+            EffectSpeed = sharedConfiguration.Speed;
+            WaveStepDelaySeconds = sharedConfiguration.WaveStepDelaySeconds;
+        }
+
         foreach (var zone in Zones)
         {
-            var configuration = configurations.FirstOrDefault(candidate =>
+            var configuration = configurationList.FirstOrDefault(candidate =>
                 string.Equals(candidate.ZoneName, zone.ZoneName, StringComparison.OrdinalIgnoreCase));
             if (configuration is not null)
             {
@@ -468,6 +746,31 @@ public sealed class MainViewModel : ObservableObject
             }
         }
     }
+
+    private static List<ZoneConfiguration> NormalizeSharedEffect(IEnumerable<ZoneConfiguration> configurations)
+    {
+        var configurationList = configurations.ToList();
+        var sharedConfiguration = configurationList.FirstOrDefault(configuration =>
+            string.Equals(configuration.ZoneName, KeyboardZones.AlphaLeft, StringComparison.OrdinalIgnoreCase))
+            ?? configurationList.FirstOrDefault();
+        var effect = sharedConfiguration is not null && Enum.IsDefined(sharedConfiguration.Effect)
+            ? sharedConfiguration.Effect
+            : LightingEffect.Static;
+        var speed = Math.Clamp(sharedConfiguration?.Speed ?? 50, 1, 100);
+        var waveStepDelaySeconds = Math.Clamp(sharedConfiguration?.WaveStepDelaySeconds ?? 1, 1, 10);
+
+        return configurationList.Select(configuration =>
+        {
+            var copy = configuration.Copy();
+            copy.Effect = effect;
+            copy.Speed = speed;
+            copy.WaveStepDelaySeconds = waveStepDelaySeconds;
+            return copy;
+        }).ToList();
+    }
+
+    private LightingEffect SelectedLightingEffect =>
+        Enum.TryParse<LightingEffect>(SelectedEffect, out var effect) ? effect : LightingEffect.Static;
 
     private void PersistUserPresets() => _presetStore.Save(Presets);
 

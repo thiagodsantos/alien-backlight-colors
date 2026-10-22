@@ -15,7 +15,7 @@ public sealed class ZoneViewModel : ObservableObject
     public ZoneViewModel(string zoneName)
     {
         ZoneName = zoneName;
-        _validColorHex = "#69E0C1";
+        _validColorHex = "#59D9F5";
         _colorHex = _validColorHex;
     }
 
@@ -56,7 +56,7 @@ public sealed class ZoneViewModel : ObservableObject
 
     public void Load(ZoneConfiguration configuration)
     {
-        ColorHex = NormalizeColor(configuration.ColorHex, "#69E0C1");
+        ColorHex = NormalizeColor(configuration.ColorHex, "#59D9F5");
     }
 
     private static bool IsHexColor(string? value)

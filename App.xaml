@@ -2,19 +2,76 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
-        <SolidColorBrush x:Key="AppBackground" Color="#0A0D12" />
-        <SolidColorBrush x:Key="PanelBackground" Color="#111720" />
-        <SolidColorBrush x:Key="PanelRaised" Color="#171F2A" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#69E0C1" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#8D9AAA" />
-        <SolidColorBrush x:Key="TextBrush" Color="#F3F6F8" />
-        <SolidColorBrush x:Key="BorderBrush" Color="#26313D" />
-        <SolidColorBrush x:Key="DangerBrush" Color="#FF8F8F" />
+        <FontFamily x:Key="QuanticoFont">pack://application:,,,/Assets/Fonts/#Quantico</FontFamily>
+        <FontFamily x:Key="GoldmanFont">pack://application:,,,/Assets/Fonts/#Goldman</FontFamily>
+        <SolidColorBrush x:Key="AppBackground" Color="#05050B" />
+        <SolidColorBrush x:Key="PanelBackground" Color="#0C0D18" />
+        <SolidColorBrush x:Key="PanelRaised" Color="#141322" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#59D9F5" />
+        <SolidColorBrush x:Key="AccentPurpleBrush" Color="#C05CFF" />
+        <SolidColorBrush x:Key="AccentGreenBrush" Color="#59F0A8" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#9693B1" />
+        <SolidColorBrush x:Key="TextBrush" Color="#F4F2FF" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#2C263F" />
+        <SolidColorBrush x:Key="DangerBrush" Color="#FF79B8" />
+        <SolidColorBrush x:Key="ActionBackground" Color="#123440" />
+        <SolidColorBrush x:Key="ActionBorder" Color="#287C94" />
+        <LinearGradientBrush x:Key="AlienStrokeBrush" StartPoint="0,1" EndPoint="1,0">
+            <GradientStop Color="#CC49F5" Offset="0" />
+            <GradientStop Color="#57CFFF" Offset="0.52" />
+            <GradientStop Color="#5DF2A5" Offset="1" />
+        </LinearGradientBrush>
+
+        <DrawingImage x:Key="AlienLogo">
+            <DrawingImage.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Geometry="M58,0 H198 Q256,0 256,58 V198 Q256,256 198,256 H58 Q0,256 0,198 V58 Q0,0 58,0 Z">
+                        <GeometryDrawing.Brush>
+                            <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.4" RadiusX="0.78" RadiusY="0.78">
+                                <GradientStop Color="#191033" Offset="0" />
+                                <GradientStop Color="#080913" Offset="0.55" />
+                                <GradientStop Color="#030409" Offset="1" />
+                            </RadialGradientBrush>
+                        </GeometryDrawing.Brush>
+                    </GeometryDrawing>
+                    <GeometryDrawing Geometry="M74,94 L26,46 M83,77 L48,12 M68,108 L8,78 M66,129 L5,117 M71,149 L12,164 M78,167 L24,198 M84,180 L32,229 M181,94 L230,45 M173,77 L210,11 M188,108 L249,77 M191,129 L253,117 M185,149 L246,164 M178,167 L232,198 M171,180 L224,229">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{StaticResource AlienStrokeBrush}" Thickness="3.2" StartLineCap="Round" EndLineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Geometry="M64,229 C68,209 82,204 91,192 C101,178 102,163 96,148 C89,132 80,119 79,101 C77,67 99,42 130,35 C162,27 190,43 205,68 C222,98 210,132 193,156 C181,173 169,188 157,198 C148,206 136,205 125,198 C115,191 108,181 101,171 M125,198 C128,216 134,232 143,245 M146,201 C162,205 176,214 184,231">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{StaticResource AlienStrokeBrush}" Thickness="4.2" StartLineCap="Round" EndLineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Geometry="M88,79 C105,61 128,49 149,49 C172,49 191,64 198,87">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{StaticResource AlienStrokeBrush}" Thickness="3" StartLineCap="Round" EndLineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Geometry="M91,111 C104,101 120,104 132,115 C141,124 145,138 146,151 C131,153 115,149 103,140 C94,133 90,121 91,111 Z M165,151 C167,137 172,122 183,112 C193,103 204,103 211,110 C213,122 208,134 199,142 C190,149 178,153 165,151 Z">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{StaticResource AlienStrokeBrush}" Thickness="3.8" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Geometry="M101,116 C111,112 122,119 129,130 C133,136 136,142 137,147 C124,146 113,142 106,135 C102,130 100,122 101,116 Z M174,145 C176,135 180,126 187,119 C192,115 198,113 203,115 C202,125 197,134 191,139 C186,143 180,145 174,145 Z">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{StaticResource AlienStrokeBrush}" Thickness="2.1" StartLineCap="Round" EndLineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Geometry="M134,173 L148,173">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#75D9F4" Thickness="3.4" StartLineCap="Round" EndLineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingImage.Drawing>
+        </DrawingImage>
 
         <Style TargetType="Button">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#202A36" />
-            <Setter Property="BorderBrush" Value="#334150" />
+            <Setter Property="Background" Value="#181827" />
+            <Setter Property="BorderBrush" Value="#38334C" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="FontSize" Value="13" />
@@ -33,8 +90,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#2A3745" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#526477" />
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#25243A" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#76628F" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.78" />
@@ -50,25 +107,25 @@
 
         <Style TargetType="TextBox">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#0C1118" />
-            <Setter Property="BorderBrush" Value="#303C49" />
+            <Setter Property="Background" Value="#090A13" />
+            <Setter Property="BorderBrush" Value="#333047" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="10,8" />
             <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
-            <Setter Property="SelectionBrush" Value="#397F70" />
+            <Setter Property="SelectionBrush" Value="#49316C" />
         </Style>
 
         <Style TargetType="ComboBox">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#0C1118" />
-            <Setter Property="BorderBrush" Value="#303C49" />
+            <Setter Property="Background" Value="#090A13" />
+            <Setter Property="BorderBrush" Value="#333047" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="8,7" />
         </Style>
 
         <Style TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#0C1118" />
+            <Setter Property="Background" Value="#090A13" />
             <Setter Property="Padding" Value="8,6" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
@@ -82,7 +139,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#1C2B30" />
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1D1731" />
                                 <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -104,8 +161,8 @@
         <Style TargetType="ListBoxItem">
             <Setter Property="Padding" Value="10" />
             <Setter Property="Margin" Value="0,0,0,7" />
-            <Setter Property="Background" Value="#151D27" />
-            <Setter Property="BorderBrush" Value="#26313D" />
+            <Setter Property="Background" Value="#12111F" />
+            <Setter Property="BorderBrush" Value="#2C263F" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
@@ -121,11 +178,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#1C2B30" />
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1D1731" />
                                 <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#526477" />
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{StaticResource AccentPurpleBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

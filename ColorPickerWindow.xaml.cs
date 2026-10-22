@@ -16,10 +16,10 @@ public partial class ColorPickerWindow : Window
     {
         InitializeComponent();
         _controlsReady = true;
-        SetColor(TryParseHex(initialColor, out var color) ? color : Colors.MediumAquamarine);
+        SetColor(TryParseHex(initialColor, out var color) ? color : Color.FromRgb(0x59, 0xD9, 0xF5));
     }
 
-    public string SelectedColorHex { get; private set; } = "#69E0C1";
+    public string SelectedColorHex { get; private set; } = "#59D9F5";
 
     private void RgbSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {

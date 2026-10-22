@@ -7,7 +7,9 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource AppBackground}"
-        Foreground="{StaticResource TextBrush}">
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource QuanticoFont}"
+        Icon="{StaticResource AlienLogo}">
     <Grid Margin="22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -29,11 +31,11 @@
             </Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="HEX VALUE" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5" />
-                <TextBox x:Name="HexInput" Text="#69E0C1" MaxLength="7" FontFamily="Consolas" FontSize="14" TextChanged="HexInput_TextChanged" />
+                <TextBox x:Name="HexInput" Text="#59D9F5" MaxLength="7" FontFamily="Consolas" FontSize="14" TextChanged="HexInput_TextChanged" />
             </StackPanel>
-            <Border x:Name="ColorPreview" Grid.Column="1" Background="#69E0C1" CornerRadius="8" BorderBrush="#445160" BorderThickness="1" Margin="12,19,0,0" />
+            <Border x:Name="ColorPreview" Grid.Column="1" Background="#59D9F5" CornerRadius="8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Margin="12,19,0,0" />
         </Grid>
-        <TextBlock x:Name="HexError" Grid.Row="2" Text="Enter a 6-digit hex value, such as #69E0C1." Foreground="{StaticResource DangerBrush}" FontSize="10" Margin="0,5,0,0" Visibility="Collapsed" />
+        <TextBlock x:Name="HexError" Grid.Row="2" Text="Enter a 6-digit hex value, such as #59D9F5." Foreground="{StaticResource DangerBrush}" FontSize="10" Margin="0,5,0,0" Visibility="Collapsed" />
 
         <StackPanel Grid.Row="3" Margin="0,18,0,0">
             <TextBlock Text="RGB COMPONENTS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,10" />
@@ -61,13 +63,13 @@
 
             <TextBlock Text="QUICK COLORS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,17,0,7" />
             <UniformGrid Columns="8" HorizontalAlignment="Left">
-                <Button Tag="#FF4B4B" Background="#FF4B4B" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Red" />
-                <Button Tag="#FF963B" Background="#FF963B" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Orange" />
-                <Button Tag="#FFD84D" Background="#FFD84D" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Yellow" />
-                <Button Tag="#7BD957" Background="#7BD957" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Green" />
-                <Button Tag="#36D6B0" Background="#36D6B0" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Mint" />
-                <Button Tag="#43B8FF" Background="#43B8FF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Blue" />
-                <Button Tag="#786BFF" Background="#786BFF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Violet" />
+                <Button Tag="#C04EFF" Background="#C04EFF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Neon violet" />
+                <Button Tag="#9A5CFF" Background="#9A5CFF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Purple" />
+                <Button Tag="#686EFF" Background="#686EFF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Indigo" />
+                <Button Tag="#4FAEFF" Background="#4FAEFF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Blue" />
+                <Button Tag="#4FD9FF" Background="#4FD9FF" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Cyan" />
+                <Button Tag="#4FF0CE" Background="#4FF0CE" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Turquoise" />
+                <Button Tag="#4FF0A2" Background="#4FF0A2" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="Neon green" />
                 <Button Tag="#F2F5F7" Background="#F2F5F7" Width="29" Height="29" Padding="0" Margin="2" Click="PaletteColor_Click" ToolTip="White" />
             </UniformGrid>
         </StackPanel>
@@ -79,7 +81,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button Content="Cancel" IsCancel="True" />
-            <Button Grid.Column="2" Content="Use this color" IsDefault="True" Click="UseColor_Click" Background="#1D6657" BorderBrush="#398875" />
+            <Button Grid.Column="2" Content="Use this color" IsDefault="True" Click="UseColor_Click" Background="{StaticResource ActionBackground}" BorderBrush="{StaticResource ActionBorder}" />
         </Grid>
     </Grid>
 </Window>

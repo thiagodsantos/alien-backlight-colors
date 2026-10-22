@@ -2,6 +2,16 @@
 
 Release notes are written under the exact version tag heading. The release workflow publishes the matching section only.
 
+## [v1.3.0]
+
+### Added
+- Added a neon alien logo to the application header and window icons.
+- Bundled Goldman and Quantico fonts for offline use.
+
+### Changed
+- Updated the interface palette and color picker swatches to match the logo's neon colors.
+- Applied Goldman to the application name and Quantico to the rest of the interface; changed the default zone color to cyan.
+
 ## [v1.2.0]
 
 ### Changed

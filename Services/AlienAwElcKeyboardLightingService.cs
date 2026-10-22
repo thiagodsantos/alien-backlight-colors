@@ -42,15 +42,15 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
             var controller = GetOrOpenController();
             return new KeyboardDeviceStatus(
                 IsConnected: true,
-                DeviceName: "AW-ELC AlienFX APIv4 keyboard",
-                Message: "HID controller opened in AlienFX APIv4 mode. Static color updates use light IDs 8–11; app-generated effects are sent as repeated static updates.");
+                DeviceName: $"AW-ELC AlienFX APIv4 keyboard (VID {controller.Transport.VendorId:X4}, PID {controller.Transport.ProductId:X4})",
+                Message: "Controller VID/PID detected automatically on startup. Static color updates use light IDs 8–11; app-generated effects are sent as repeated static updates.");
         }
         catch (FileNotFoundException)
         {
             return new KeyboardDeviceStatus(
                 IsConnected: false,
                 DeviceName: "AW-ELC keyboard not enumerated",
-                Message: "Windows cannot currently see the AW-ELC HID controller (VID 187C, PID 0550). If Device Manager shows USB Code 43 after AWCC removal, perform a full EC power reset: shut down, unplug AC, hold the power button for 30 seconds, then reconnect and boot.");
+                Message: "Windows cannot currently see a Dell AW-ELC HID controller. The app detects the controller's product ID automatically when it starts. If Device Manager shows USB Code 43 after AWCC removal, perform a full EC power reset: shut down, unplug AC, hold the power button for 30 seconds, then reconnect and boot.");
         }
         catch (NotSupportedException exception)
         {
@@ -421,10 +421,10 @@ public sealed class AlienAwElcKeyboardLightingService : IKeyboardLightingService
 
     private static ControllerConnection OpenController()
     {
-        var paths = WindowsHidTransport.FindAwElcDevicePaths();
+        var paths = WindowsHidTransport.FindDellHidDevicePaths();
         if (paths.Count == 0)
         {
-            throw new FileNotFoundException("No HID device with USB VID 187C and PID 0550 was found.");
+            throw new FileNotFoundException("No present Dell HID interface was found. AW-ELC product IDs are detected automatically from connected devices.");
         }
 
         Exception? lastError = null;

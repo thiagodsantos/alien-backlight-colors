@@ -62,46 +62,11 @@
 
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2.05*" />
                     <ColumnDefinition Width="0.95*" MinWidth="330" />
+                    <ColumnDefinition Width="2.05*" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20" Margin="0,0,0,18">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,17">
-                                <StackPanel>
-                                    <TextBlock Text="LIGHTING PREVIEW" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
-                                    <TextBlock Text="Your keyboard at a glance" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
-                                </StackPanel>
-                                <TextBlock Text="LOCAL PREVIEW" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
-                            </Grid>
-                            <Border Background="#070810" BorderBrush="#2C263F" BorderThickness="1" CornerRadius="12" Padding="10">
-                                <ItemsControl ItemsSource="{Binding Zones}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="4" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{Binding ColorBrush}" CornerRadius="8" Margin="5" Height="72" Opacity="0.92">
-                                                <Grid>
-                                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding ZoneName}" Foreground="#09100F" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Border>
-                            <StackPanel Orientation="Horizontal" Margin="2,12,2,0">
-                                <TextBlock Text="SHARED EFFECT" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,7,0" />
-                                <TextBlock Text="{Binding SelectedEffect}" Foreground="{StaticResource AccentBrush}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
+                <StackPanel Grid.Column="1" Margin="20,0,0,0">
 
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
                         <StackPanel>
@@ -115,42 +80,16 @@
                             <Border Background="#090A13" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,14">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="55" />
-                                        <ColumnDefinition Width="10" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="BACKLIGHT BRIGHTNESS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
-                                        <Slider Minimum="0" Maximum="100" TickFrequency="10" Value="{Binding Brightness, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource AccentBrush}" Margin="0,5,0,0" />
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding BrightnessLabel}" Foreground="{StaticResource TextBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" />
-                                    <Button Grid.Column="3" Content="{Binding BacklightToggleLabel}" Command="{Binding ToggleBacklightCommand}" Padding="12,8" ToolTip="Turn the keyboard backlight on or off immediately." />
-                                </Grid>
-                            </Border>
-                            <Grid Margin="2,0,2,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="86" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="BACKLIGHT ACTIVE FOR (SECONDS)" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
-                                    <TextBlock Text="0 keeps it active while the app is running; otherwise it turns off after inactivity." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,4,8,0" />
-                                </StackPanel>
-                                <TextBox Grid.Column="1" Text="{Binding BacklightActiveSeconds, UpdateSourceTrigger=LostFocus}" MaxLength="5" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" ToolTip="Seconds of keyboard inactivity before the backlight turns off. Set to 0 to keep it active while the app is running." />
-                            </Grid>
-                            <TextBlock Text="Apply starts the shared effect with the selected brightness and zone colors. A brightness of 0 applies as 100%." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
-                            <Border Background="#090A13" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,14">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="14" />
-                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="1.15*" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="1.15*" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="EFFECT FOR ALL ZONES" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,6" />
                                         <ComboBox ItemsSource="{Binding EffectOptions}" SelectedItem="{Binding SelectedEffect, UpdateSourceTrigger=PropertyChanged}" Background="#090A13" Foreground="{StaticResource TextBrush}" />
-                                        <TextBlock Text="Effects are generated in software using static color updates; keep the app running." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                        <TextBlock Text="Effects run in software using static color updates; keep the app running." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0" />
                                         <TextBlock Text="Matrix pulses through green shades across all four zones, using the selected brightness." Foreground="{StaticResource AccentBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
@@ -219,25 +158,51 @@
                                         </Grid>
                                         <Slider Minimum="1" Maximum="100" Value="{Binding EffectSpeed, UpdateSourceTrigger=PropertyChanged}" TickFrequency="1" IsSnapToTickEnabled="False" Foreground="{StaticResource AccentBrush}" />
                                     </StackPanel>
+                                    <StackPanel Grid.Column="4">
+                                        <Grid Margin="0,0,0,5">
+                                            <TextBlock Text="BACKLIGHT BRIGHTNESS" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                            <TextBlock Text="{Binding BrightnessLabel}" HorizontalAlignment="Right" Foreground="{StaticResource TextBrush}" FontSize="10" />
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Slider Minimum="0" Maximum="100" TickFrequency="10" Value="{Binding Brightness, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                            <Button Grid.Column="1" Content="{Binding BacklightToggleLabel}" Command="{Binding ToggleBacklightCommand}" Padding="7,5" Margin="8,0,0,0" FontSize="9" ToolTip="Turn the keyboard backlight on or off immediately." />
+                                        </Grid>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
+                            <Grid Margin="2,0,2,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="86" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="BACKLIGHT ACTIVE FOR (SECONDS)" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                    <TextBlock Text="0 keeps it active while the app is running; otherwise it turns off after inactivity." Foreground="{StaticResource MutedBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,4,8,0" />
+                                </StackPanel>
+                                <TextBox Grid.Column="1" Text="{Binding BacklightActiveSeconds, UpdateSourceTrigger=LostFocus}" MaxLength="5" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" ToolTip="Seconds of keyboard inactivity before the backlight turns off. Set to 0 to keep it active while the app is running." />
+                            </Grid>
+                            <TextBlock Text="Apply starts the shared effect with the selected brightness and zone colors. A brightness of 0 applies as 100%." Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="2,0,2,12" />
                             <ItemsControl ItemsSource="{Binding Zones}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <UniformGrid Columns="2" />
+                                        <UniformGrid Columns="4" />
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource PanelRaised}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="11" Padding="13" Margin="0,0,9,10">
+                                        <Border Background="{StaticResource PanelRaised}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="11" Padding="9" Margin="0,0,7,8">
                                             <StackPanel>
-                                                <Grid Margin="0,0,0,11">
+                                                <Grid Margin="0,0,0,7">
                                                     <TextBlock Text="{Binding ZoneName}" FontSize="13" FontWeight="SemiBold" />
                                                     <TextBlock Text="ZONE" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" FontSize="8" FontWeight="Bold" VerticalAlignment="Center" />
                                                 </Grid>
-                                                <Border Height="42" Background="{Binding ColorBrush}" CornerRadius="7" Margin="0,0,0,11" />
+                                                <Border Height="30" Background="{Binding ColorBrush}" CornerRadius="7" Margin="0,0,0,7" />
 
-                                                <TextBlock Text="PRIMARY COLOR" Foreground="{StaticResource MutedBrush}" FontSize="9" FontWeight="Bold" />
+                                                <TextBlock Text="PRIMARY COLOR" Foreground="{StaticResource MutedBrush}" FontSize="8" FontWeight="Bold" />
                                                 <Grid Margin="0,5,0,0">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
@@ -263,7 +228,7 @@
                     </Border>
                 </StackPanel>
 
-                <Border Grid.Column="1" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                <Border Grid.Column="0" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
                     <StackPanel>
                         <TextBlock Text="PRESET LIBRARY" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" />
                         <TextBlock Text="Save your favorite looks" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,4" />

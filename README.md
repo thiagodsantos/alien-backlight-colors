@@ -5,7 +5,7 @@ A Windows desktop editor for the four lighting zones on Dell G15 laptops using t
 ## Supported hardware
 
 - Verified target: **Dell G15 5515**, AW-ELC controller `USB VID 187C / PID 0550`, AlienFX APIv4.
-- The app queries the controller's platform report on startup and supports the verified 16-LED layout. Other controller layouts remain unsupported.
+- On startup, the app reads the connected Dell HID controller's VID/PID automatically and verifies its platform report. It supports the verified 16-LED layout; other controller layouts remain unsupported.
 - The four UI zones are **Left (alpha)**, **Center (alpha)**, **Right (alpha)**, and **Numeric keypad**.
 
 ## Build and run

@@ -6,8 +6,7 @@ namespace AlienCommandCenter.Services;
 
 internal sealed class WindowsHidTransport : IDisposable
 {
-    private const ushort VendorId = 0x187C;
-    private const ushort ProductId = 0x0550;
+    private const ushort DellVendorId = 0x187C;
     private const uint DigcfPresent = 0x00000002;
     private const uint DigcfDeviceInterface = 0x00000010;
     private const uint GenericRead = 0x80000000;
@@ -50,9 +49,11 @@ internal sealed class WindowsHidTransport : IDisposable
                 throw LastWin32Error("Could not read the keyboard HID attributes.");
             }
 
-            if (attributes.VendorId != VendorId || attributes.ProductId != ProductId)
+            VendorId = attributes.VendorId;
+            ProductId = attributes.ProductId;
+            if (VendorId != DellVendorId)
             {
-                throw new InvalidOperationException("The selected HID interface is not an AW-ELC keyboard controller.");
+                throw new InvalidOperationException("The selected HID interface is not a Dell keyboard controller.");
             }
 
             if (!HidD_GetPreparsedData(_handle, out var preparsedData))
@@ -90,8 +91,10 @@ internal sealed class WindowsHidTransport : IDisposable
     }
 
     public string DevicePath { get; }
+    public ushort VendorId { get; }
+    public ushort ProductId { get; }
 
-    public static IReadOnlyList<string> FindAwElcDevicePaths()
+    public static IReadOnlyList<string> FindDellHidDevicePaths()
     {
         HidD_GetHidGuid(out var hidGuid);
         var deviceInfoSet = SetupDiGetClassDevs(
@@ -154,7 +157,7 @@ internal sealed class WindowsHidTransport : IDisposable
                     }
 
                     var path = Marshal.PtrToStringUni(IntPtr.Add(detailData, 4));
-                    if (path is not null && path.Contains("VID_187C&PID_0550", StringComparison.OrdinalIgnoreCase))
+                    if (path is not null && path.Contains($"VID_{DellVendorId:X4}&PID_", StringComparison.OrdinalIgnoreCase))
                     {
                         paths.Add(path);
                     }
